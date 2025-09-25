@@ -1,0 +1,6 @@
+---
+- name: ED 25-03 Part One - Collect Artifacts
+  hosts: asa
+  gather_facts: false
+  roles:
+    - role: collect_artifacts

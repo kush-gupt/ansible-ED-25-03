@@ -1,0 +1,14 @@
+---
+# Device classification for guidance branching: asa | asav | ftd | unknown
+version_assessment_ed25_device_type: asa
+
+# Whether this device is public-facing (per ED 25-03 scope)
+version_assessment_ed25_is_public_facing: false
+
+# Support status hints for ED timelines
+# Options: supported | eos_2025_09_30_or_earlier | eos_2026_08_31 | unknown
+version_assessment_ed25_support_status: unknown
+version_assessment_ed25_support_end_date: ""
+
+# Output directory on control node
+version_assessment_ed_25_03_output_dir: "{{ (playbook_dir | default('.') ) + '/artifacts/' + inventory_hostname }}"

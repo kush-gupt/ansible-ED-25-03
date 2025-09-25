@@ -1,0 +1,73 @@
+---
+- name: Disable pager
+  cisco.asa.asa_command:
+    commands:
+      - terminal pager 0
+  tags:
+    - skip_ansible_lint
+
+- name: Gather show version
+  cisco.asa.asa_command:
+    commands:
+      - show version
+  register: show_version
+  tags:
+    - skip_ansible_lint
+
+- name: Extract ASA version string
+  ansible.builtin.set_fact:
+    asa_version_text: "{{ (show_version.stdout[0] | default('')) }}"
+
+- name: Parse version components (best-effort)
+  vars:
+    m: "{{ asa_version_text | regex_search('Cisco Adaptive Security Appliance Software Version\\s+([0-9]+\\.[0-9]+\\.[0-9]+(?:\\.[0-9]+)?)', '\\1') }}"
+  ansible.builtin.set_fact:
+    asa_version_parsed: "{{ m | default('') }}"
+
+- name: Auto-detect device type from show version output
+  ansible.builtin.set_fact:
+    ed25_detected_device_type: |
+      {%- if 'ASAv' in asa_version_text -%}
+      asav
+      {%- elif 'Firepower' in asa_version_text -%}
+      ftd
+      {%- elif 'ASA-SM' in asa_version_text or 'Service Module' in asa_version_text -%}
+      asa-sm
+      {%- elif 'Adaptive Security Appliance' in asa_version_text -%}
+      asa
+      {%- else -%}
+      unknown
+      {%- endif -%}
+
+- name: Determine potential vulnerability to CVE-2025-20333 (RCE)
+  ansible.builtin.set_fact:
+    ed25_vuln_cve_2025_20333: "{{ asa_version_parsed != '' and (asa_version_parsed is version('9.20', '<')) }}"
+
+- name: Determine potential vulnerability to CVE-2025-20362 (Privilege Escalation)
+  ansible.builtin.set_fact:
+    ed25_vuln_cve_2025_20362: "{{ asa_version_parsed != '' and (asa_version_parsed is version('9.20', '<')) }}"
+
+- name: Determine vulnerable trains related to handler removal notes
+  ansible.builtin.set_fact:
+    ed25_handler_removed_safe: "{{ asa_version_parsed != '' and (asa_version_parsed is version('9.20', '>=')) }}"
+
+- name: Build assessment summary
+  ansible.builtin.set_fact:
+    ed25_version_assessment:
+      device_type: "{{ ed25_device_type | default(ed25_detected_device_type) }}"
+      device_type_detected: "{{ ed25_detected_device_type }}"
+      is_public_facing: "{{ ed25_is_public_facing }}"
+      support_status: "{{ ed25_support_status }}"
+      support_end_date: "{{ ed25_support_end_date }}"
+      asa_version_text: "{{ asa_version_text }}"
+      asa_version: "{{ asa_version_parsed }}"
+      cve_2025_20333_vulnerable: "{{ ed25_vuln_cve_2025_20333 }}"
+      cve_2025_20362_vulnerable: "{{ ed25_vuln_cve_2025_20362 }}"
+      handler_removed_safe: "{{ ed25_handler_removed_safe }}"
+
+- name: Save version assessment JSON
+  ansible.builtin.copy:
+    dest: "{{ ed_25_03_output_dir }}/version_assessment.json"
+    content: "{{ ed25_version_assessment | to_nice_json }}\n"
+    mode: "0644"
+  delegate_to: localhost

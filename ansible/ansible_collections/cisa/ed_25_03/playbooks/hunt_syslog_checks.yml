@@ -1,0 +1,9 @@
+---
+- name: ED 25-03 Part Four - Syslog Hunt Helpers (local)
+  hosts: asa
+
+  roles:
+    - role: hunt_syslog_checks
+      vars:
+        # Example: '/var/log/asa/*.log'
+        hunt_syslog_checks_asa_syslog_glob: ""

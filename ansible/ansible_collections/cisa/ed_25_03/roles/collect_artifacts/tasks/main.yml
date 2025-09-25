@@ -1,0 +1,123 @@
+---
+- name: Ensure output directory exists on control node
+  ansible.builtin.file:
+    path: "{{ ed_25_03_output_dir }}"
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+  run_once: false
+
+- name: Disable terminal pager to avoid pagination side effects
+  cisco.asa.asa_command:
+    commands:
+      - terminal pager 0
+
+- name: Gather device details (model/serial/version)
+  cisco.asa.asa_command:
+    commands:
+      - show version
+  register: version_out
+
+- name: Save 'show version' output
+  ansible.builtin.copy:
+    dest: "{{ ed_25_03_output_dir }}/show_version.txt"
+    content: "{{ version_out.stdout[0] | default('') }}\n"
+    mode: "0644"
+  delegate_to: localhost
+
+- name: Run initial 'show checkheaps' (pre)
+  cisco.asa.asa_command:
+    commands:
+      - show checkheaps
+  register: checkheaps_1
+
+- name: Save checkheaps pre output
+  ansible.builtin.copy:
+    dest: "{{ ed_25_03_output_dir }}/checkheaps_1.txt"
+    content: "{{ checkheaps_1.stdout[0] | default('') }}\n"
+    mode: "0644"
+  delegate_to: localhost
+
+- name: Wait required interval between checkheaps runs
+  ansible.builtin.wait_for:
+    timeout: "{{ ed_25_03_checkheaps_wait_seconds }}"
+  delegate_to: localhost
+
+- name: Run follow-up 'show checkheaps' (post)
+  cisco.asa.asa_command:
+    commands:
+      - show checkheaps
+  register: checkheaps_2
+
+- name: Save checkheaps post output
+  ansible.builtin.copy:
+    dest: "{{ ed_25_03_output_dir }}/checkheaps_2.txt"
+    content: "{{ checkheaps_2.stdout[0] | default('') }}\n"
+    mode: "0644"
+  delegate_to: localhost
+
+- name: Parse Total number of runs from pre
+  ansible.builtin.set_fact:
+    ed25_runs_1: "{{ (checkheaps_1.stdout[0] | regex_search('Total\\s+number\\s+of\\s+runs\\s*:?\\s*(\\d+)', '\\1')) | default('0') | int }}"
+
+- name: Parse Total number of runs from post
+  ansible.builtin.set_fact:
+    ed25_runs_2: "{{ (checkheaps_2.stdout[0] | regex_search('Total\\s+number\\s+of\\s+runs\\s*:?\\s*(\\d+)', '\\1')) | default('0') | int }}"
+
+- name: Evaluate increase in runs
+  ansible.builtin.set_fact:
+    ed25_checkheaps_increased: "{{ ed25_runs_2 > ed25_runs_1 }}"
+
+- name: Save checkheaps summary JSON
+  ansible.builtin.copy:
+    dest: "{{ ed_25_03_output_dir }}/checkheaps_summary.json"
+    content: "{{ {'runs_pre': ed25_runs_1, 'runs_post': ed25_runs_2, 'increased': ed25_checkheaps_increased} | to_nice_json }}\n"
+    mode: "0644"
+  delegate_to: localhost
+
+- name: Run 'show tech-support detail' (may take a long time)
+  cisco.asa.asa_command:
+    commands:
+      - show tech-support detail
+  register: show_tech
+  vars:
+    ansible_command_timeout: "{{ ed_25_03_command_timeout }}"
+
+- name: Save tech-support detail output
+  ansible.builtin.copy:
+    dest: "{{ ed_25_03_output_dir }}/show_tech_support_detail.txt"
+    content: "{{ show_tech.stdout[0] | default('') }}\n"
+    mode: "0600"
+  delegate_to: localhost
+
+- name: Check for presence of threat actor implant (per CISA grep)
+  cisco.asa.asa_command:
+    commands:
+      - more /binary system:/text | grep 55534154 41554156 41575756 488bb3a0
+  register: implant_check
+
+- name: Save implant check output
+  ansible.builtin.copy:
+    dest: "{{ ed_25_03_output_dir }}/implant_check.txt"
+    content: |
+      {{ implant_check.stdout[0] | default('') }}
+    mode: "0644"
+  delegate_to: localhost
+- name: Set compromised flag if any implant output is present
+  ansible.builtin.set_fact:
+    ed25_compromised: "{{ (implant_check.stdout[0] | default('') | trim) != '' }}"
+
+- name: Save artifact summary JSON
+  ansible.builtin.copy:
+    dest: "{{ ed_25_03_output_dir }}/artifact_summary.json"
+    content: |
+      {{ {
+        'checkheaps': {
+          'runs_pre': ed25_runs_1,
+          'runs_post': ed25_runs_2,
+          'increased': ed25_checkheaps_increased
+        },
+        'implant_detected': ed25_compromised
+      } | to_nice_json }}
+    mode: "0644"
+  delegate_to: localhost

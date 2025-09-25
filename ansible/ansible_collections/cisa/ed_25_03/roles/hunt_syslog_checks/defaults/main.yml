@@ -1,0 +1,3 @@
+---
+# Glob path on the control node for ASA syslog files to analyze
+hunt_syslog_checks_asa_syslog_glob: ""

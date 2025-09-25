@@ -1,0 +1,6 @@
+---
+- name: ED 25-03 Part Two - Core Dump (DANGEROUS)
+  hosts: asa
+  gather_facts: false
+  roles:
+    - role: core_dump
