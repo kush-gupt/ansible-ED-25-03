@@ -1,6 +1,6 @@
 ---
 # Directory on the control node where outputs will be stored per-host
-collect_artifacts_ed_25_03_output_dir: "{{ (playbook_dir | default('.') ) + '/artifacts/' + inventory_hostname }}"
+collect_artifacts_ed_25_03_output_dir: "{{ (playbook_dir | default('.')) + '/artifacts/' + inventory_hostname }}"
 
 # Wait time between checkheaps runs (seconds). CISA recommends 5+ minutes.
 collect_artifacts_ed_25_03_checkheaps_wait_seconds: 300

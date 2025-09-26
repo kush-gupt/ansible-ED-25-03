@@ -3,7 +3,7 @@
   hosts: asa
 
   roles:
-    - role: hunt_syslog_checks
+    - role: kush_gupt.ed_25_03.hunt_syslog_checks
       vars:
         # Example: '/var/log/asa/*.log'
         hunt_syslog_checks_asa_syslog_glob: ""

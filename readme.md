@@ -46,39 +46,39 @@ cp ansible/group_vars/asa.yml.example ansible/group_vars/asa.yml
 ```bash
 # Safe initial assessment - no device impact
 ansible-playbook -i ansible/inventory.ini \
-  ansible/ansible_collections/playbooks/collect_artifacts.yml
+  ansible/playbooks/collect_artifacts.yml
 ```
 
 #### Step 2: Patch Verification
 ```bash
 # Check for firmware update logs
 ansible-playbook -i ansible/inventory.ini \
-  ansible/ansible_collections/playbooks/patch_checks.yml
+  ansible/playbooks/patch_checks.yml
 ```
 
 #### Step 3: Syslog Analysis (Local)
 ```bash
 # Analyze exported syslog files on control node
 ansible-playbook -i ansible/inventory.ini \
-  ansible/ansible_collections/playbooks/hunt_syslog_checks.yml \
-  -e asa_syslog_glob="/path/to/your/asa/logs/*.log"
+  ansible/playbooks/hunt_syslog_checks.yml \
+  -e hunt_syslog_checks_asa_syslog_glob="/path/to/your/asa/logs/*.log"
 ```
 
 #### Step 4: Core Dump (⚠️ DANGEROUS - CAUSES OUTAGE)
 ```bash
 # Only execute if compromise is suspected and you understand the risks
 ansible-playbook -i ansible/inventory.ini \
-  ansible/ansible_collections/playbooks/core_dump.yml \
-  -e ed_25_03_perform_core_dump=true \
-  -e ed_25_03_confirm_manual_power_cycle=true \
-  -e ed_25_03_core_dump_ack_text="I acknowledge this triggers immediate reload and potential outage per CISA ED 25-03 guidance."
+  ansible/playbooks/core_dump.yml \
+  -e core_dump_ed_25_03_perform_core_dump=true \
+  -e core_dump_ed_25_03_confirm_manual_power_cycle=true \
+  -e core_dump_ed_25_03_core_dump_ack_text="I acknowledge this triggers immediate reload and potential outage per CISA ED 25-03 guidance."
 ```
 
 #### Step 5: Comprehensive Report
 ```bash
 # Generate consolidated assessment report
 ansible-playbook -i ansible/inventory.ini \
-  ansible/ansible_collections/playbooks/assess_and_report.yml
+  ansible/playbooks/assess_and_report.yml
 ```
 
 ### Step 6. Review Results

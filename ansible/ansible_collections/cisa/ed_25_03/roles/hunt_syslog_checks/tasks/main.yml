@@ -5,15 +5,15 @@
 - name: Ensure local syslog path is provided
   ansible.builtin.assert:
     that:
-      - asa_syslog_glob is defined
-      - asa_syslog_glob | length > 0
-    fail_msg: "Set asa_syslog_glob to a glob of local ASA syslog files (on control node)."
+      - hunt_syslog_checks_asa_syslog_glob is defined
+      - hunt_syslog_checks_asa_syslog_glob | length > 0
+    fail_msg: "Set hunt_syslog_checks_asa_syslog_glob to a glob of local ASA syslog files (on control node)."
   delegate_to: localhost
 
 - name: Find syslog files
   ansible.builtin.find:
-    paths: "{{ (asa_syslog_glob | dirname) | default('/var/log') }}"
-    patterns: "{{ asa_syslog_glob | basename }}"
+    paths: "{{ (hunt_syslog_checks_asa_syslog_glob | dirname) | default('/var/log') }}"
+    patterns: "{{ hunt_syslog_checks_asa_syslog_glob | basename }}"
     use_regex: false
   register: syslog_files
   delegate_to: localhost

@@ -1,7 +1,7 @@
 ---
 - name: Ensure output directory exists on control node
   ansible.builtin.file:
-    path: "{{ ed_25_03_output_dir }}"
+    path: "{{ core_dump_ed_25_03_output_dir }}"
     state: directory
     mode: "0755"
   delegate_to: localhost
@@ -9,20 +9,20 @@
 - name: Assert explicit confirmation variables are set
   ansible.builtin.assert:
     that:
-      - ed_25_03_perform_core_dump | bool
-      - ed_25_03_confirm_manual_power_cycle | bool
-      - ed_25_03_core_dump_ack_text | length > 20
+      - core_dump_ed_25_03_perform_core_dump | bool
+      - core_dump_ed_25_03_confirm_manual_power_cycle | bool
+      - core_dump_ed_25_03_core_dump_ack_text | length > 20
     fail_msg: >-
       Core dump is DANGEROUS and triggers immediate reload. Set:
-      ed_25_03_perform_core_dump=true,
-      ed_25_03_confirm_manual_power_cycle=true,
-      ed_25_03_core_dump_ack_text='<type a long explicit acknowledgment>'
+      core_dump_ed_25_03_perform_core_dump=true,
+      core_dump_ed_25_03_confirm_manual_power_cycle=true,
+      core_dump_ed_25_03_core_dump_ack_text='<type a long explicit acknowledgment>'
 
 - name: Save operator acknowledgment
   ansible.builtin.copy:
-    dest: "{{ ed_25_03_output_dir }}/core_dump_ack.txt"
+    dest: "{{ core_dump_ed_25_03_output_dir }}/core_dump_ack.txt"
     content: |-
-      {{ ed_25_03_core_dump_ack_text }}
+      {{ core_dump_ed_25_03_core_dump_ack_text }}
     mode: "0600"
   delegate_to: localhost
 
@@ -40,7 +40,7 @@
 - name: Configure ASA to enable core dump to filesystem
   cisco.asa.asa_config:
     lines:
-      - coredump enable filesystem {{ ed_25_03_filesystem }}
+      - coredump enable filesystem {{ core_dump_ed_25_03_filesystem }}
     save_when: never
 
 - name: Initiate core dump (this triggers IMMEDIATE reload)
@@ -52,13 +52,13 @@
 
 - name: Save crash command output
   ansible.builtin.copy:
-    dest: "{{ ed_25_03_output_dir }}/core_dump_trigger_output.txt"
+    dest: "{{ core_dump_ed_25_03_output_dir }}/core_dump_trigger_output.txt"
     content: "{{ crash_cmd.stdout | default([]) | join('\n') }}\n"
     mode: "0644"
   delegate_to: localhost
 
 - name: Wait for expected reload interval (best effort)
-  when: ed_25_03_attempt_reconnect | bool
+  when: core_dump_ed_25_03_attempt_reconnect | bool
   ansible.builtin.wait_for:
-    timeout: "{{ ed_25_03_expected_reload_seconds }}"
+    timeout: "{{ core_dump_ed_25_03_expected_reload_seconds }}"
   delegate_to: localhost

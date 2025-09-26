@@ -3,4 +3,4 @@
   hosts: asa
   gather_facts: false
   roles:
-    - role: collect_artifacts
+    - role: kush_gupt.ed_25_03.collect_artifacts

@@ -54,11 +54,11 @@
 - name: Build assessment summary
   ansible.builtin.set_fact:
     ed25_version_assessment:
-      device_type: "{{ ed25_device_type | default(ed25_detected_device_type) }}"
+      device_type: "{{ version_assessment_ed25_device_type | default(ed25_detected_device_type) }}"
       device_type_detected: "{{ ed25_detected_device_type }}"
-      is_public_facing: "{{ ed25_is_public_facing }}"
-      support_status: "{{ ed25_support_status }}"
-      support_end_date: "{{ ed25_support_end_date }}"
+      is_public_facing: "{{ version_assessment_ed25_is_public_facing }}"
+      support_status: "{{ version_assessment_ed25_support_status }}"
+      support_end_date: "{{ version_assessment_ed25_support_end_date }}"
       asa_version_text: "{{ asa_version_text }}"
       asa_version: "{{ asa_version_parsed }}"
       cve_2025_20333_vulnerable: "{{ ed25_vuln_cve_2025_20333 }}"
@@ -67,7 +67,7 @@
 
 - name: Save version assessment JSON
   ansible.builtin.copy:
-    dest: "{{ ed_25_03_output_dir }}/version_assessment.json"
+    dest: "{{ version_assessment_ed_25_03_output_dir }}/version_assessment.json"
     content: "{{ ed25_version_assessment | to_nice_json }}\n"
     mode: "0644"
   delegate_to: localhost

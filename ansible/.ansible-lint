@@ -1,0 +1,16 @@
+---
+# Ansible Lint configuration
+exclude_paths:
+  - .cache/  # implicit unless exclude_paths is defined in config
+  - .github/
+  - .ansible/
+
+# Skip variable naming rules to allow user-friendly variable names that match readme.md
+skip_list:
+  - var-naming[no-role-prefix]  # Allow variables without role prefix for user-friendly naming
+
+# Use default rules otherwise
+use_default_rules: true
+
+# Enable offline mode to avoid downloading rules
+offline: false

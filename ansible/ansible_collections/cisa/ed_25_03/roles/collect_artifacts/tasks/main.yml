@@ -1,7 +1,7 @@
 ---
 - name: Ensure output directory exists on control node
   ansible.builtin.file:
-    path: "{{ ed_25_03_output_dir }}"
+    path: "{{ collect_artifacts_collect_artifacts_ed_25_03_output_dir }}"
     state: directory
     mode: "0755"
   delegate_to: localhost
@@ -20,7 +20,7 @@
 
 - name: Save 'show version' output
   ansible.builtin.copy:
-    dest: "{{ ed_25_03_output_dir }}/show_version.txt"
+    dest: "{{ collect_artifacts_ed_25_03_output_dir }}/show_version.txt"
     content: "{{ version_out.stdout[0] | default('') }}\n"
     mode: "0644"
   delegate_to: localhost
@@ -33,14 +33,14 @@
 
 - name: Save checkheaps pre output
   ansible.builtin.copy:
-    dest: "{{ ed_25_03_output_dir }}/checkheaps_1.txt"
+    dest: "{{ collect_artifacts_ed_25_03_output_dir }}/checkheaps_1.txt"
     content: "{{ checkheaps_1.stdout[0] | default('') }}\n"
     mode: "0644"
   delegate_to: localhost
 
 - name: Wait required interval between checkheaps runs
   ansible.builtin.wait_for:
-    timeout: "{{ ed_25_03_checkheaps_wait_seconds }}"
+    timeout: "{{ collect_artifacts_ed_25_03_checkheaps_wait_seconds }}"
   delegate_to: localhost
 
 - name: Run follow-up 'show checkheaps' (post)
@@ -51,7 +51,7 @@
 
 - name: Save checkheaps post output
   ansible.builtin.copy:
-    dest: "{{ ed_25_03_output_dir }}/checkheaps_2.txt"
+    dest: "{{ collect_artifacts_ed_25_03_output_dir }}/checkheaps_2.txt"
     content: "{{ checkheaps_2.stdout[0] | default('') }}\n"
     mode: "0644"
   delegate_to: localhost
@@ -70,7 +70,7 @@
 
 - name: Save checkheaps summary JSON
   ansible.builtin.copy:
-    dest: "{{ ed_25_03_output_dir }}/checkheaps_summary.json"
+    dest: "{{ collect_artifacts_ed_25_03_output_dir }}/checkheaps_summary.json"
     content: "{{ {'runs_pre': ed25_runs_1, 'runs_post': ed25_runs_2, 'increased': ed25_checkheaps_increased} | to_nice_json }}\n"
     mode: "0644"
   delegate_to: localhost
@@ -81,11 +81,11 @@
       - show tech-support detail
   register: show_tech
   vars:
-    ansible_command_timeout: "{{ ed_25_03_command_timeout }}"
+    ansible_command_timeout: "{{ collect_artifacts_ed_25_03_command_timeout }}"
 
 - name: Save tech-support detail output
   ansible.builtin.copy:
-    dest: "{{ ed_25_03_output_dir }}/show_tech_support_detail.txt"
+    dest: "{{ collect_artifacts_ed_25_03_output_dir }}/show_tech_support_detail.txt"
     content: "{{ show_tech.stdout[0] | default('') }}\n"
     mode: "0600"
   delegate_to: localhost
@@ -98,7 +98,7 @@
 
 - name: Save implant check output
   ansible.builtin.copy:
-    dest: "{{ ed_25_03_output_dir }}/implant_check.txt"
+    dest: "{{ collect_artifacts_ed_25_03_output_dir }}/implant_check.txt"
     content: |
       {{ implant_check.stdout[0] | default('') }}
     mode: "0644"
@@ -109,7 +109,7 @@
 
 - name: Save artifact summary JSON
   ansible.builtin.copy:
-    dest: "{{ ed_25_03_output_dir }}/artifact_summary.json"
+    dest: "{{ collect_artifacts_ed_25_03_output_dir }}/artifact_summary.json"
     content: |
       {{ {
         'checkheaps': {
