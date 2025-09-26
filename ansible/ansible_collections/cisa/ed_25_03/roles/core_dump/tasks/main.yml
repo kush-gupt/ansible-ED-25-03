@@ -16,7 +16,8 @@
       Core dump is DANGEROUS and triggers immediate reload. Set:
       core_dump_ed_25_03_perform_core_dump=true,
       core_dump_ed_25_03_confirm_manual_power_cycle=true,
-      core_dump_ed_25_03_core_dump_ack_text='<type a long explicit acknowledgment>'
+      core_dump_ed_25_03_core_dump_ack_text='<type a long explicit
+        acknowledgment>'
 
 - name: Save operator acknowledgment
   ansible.builtin.copy:

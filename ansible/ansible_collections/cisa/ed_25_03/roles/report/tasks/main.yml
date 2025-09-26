@@ -22,9 +22,15 @@
 
 - name: Assemble consolidated report structure
   vars:
-    _vass: "{{ (vass.content | default('') | b64decode | default('{}')) | from_json | default({}) }}"
-    _art: "{{ (art.content | default('') | b64decode | default('{}')) | from_json | default({}) }}"
-    _sys: "{{ (sysc.content | default('') | b64decode | default('{}')) | from_json | default({}) }}"
+    _vass: >
+      {{ (vass.content | default('') | b64decode | default('{}')) |
+         from_json | default({}) }}
+    _art: >
+      {{ (art.content | default('') | b64decode | default('{}')) |
+         from_json | default({}) }}
+    _sys: >
+      {{ (sysc.content | default('') | b64decode | default('{}')) |
+         from_json | default({}) }}
   ansible.builtin.set_fact:
     ed25_report:
       host: "{{ inventory_hostname }}"
@@ -36,23 +42,34 @@
   ansible.builtin.set_fact:
     ed25_report: "{{ ed25_report | combine({'recommendations': _recs}) }}"
   vars:
-    _compromised: "{{ ed25_report.artifacts.implant_detected | default(false) }}"
-    _is_public: "{{ ed25_report.version_assessment.is_public_facing | default(false) }}"
-    _support: "{{ ed25_report.version_assessment.support_status | default('unknown') }}"
+    _compromised: >
+      {{ ed25_report.artifacts.implant_detected | default(false) }}
+    _is_public: >
+      {{ ed25_report.version_assessment.is_public_facing | default(false) }}
+    _support: >
+      {{ ed25_report.version_assessment.support_status | default('unknown') }}
     _recs: |
       {% set recs = [] %}
       {% if _compromised %}
-      {% set _ = recs.append('Compromise Detected: disconnect from network (do not power off), report to CISA, coordinate IR (ED 25-03).') %}
+      {% set _ = recs.append('Compromise Detected: disconnect from network
+                             (do not power off), report to CISA, coordinate IR
+                             (ED 25-03).') %}
       {% else %}
-      {% set _ = recs.append('No Compromise Detected: proceed to upgrade/mitigation per ED 25-03 timelines.') %}
+      {% set _ = recs.append('No Compromise Detected: proceed to
+                             upgrade/mitigation per ED 25-03 timelines.') %}
       {% endif %}
       {% if _is_public %}
-      {% set _ = recs.append('Public-facing ASA: ensure Parts 1-3 complete and submit core dump per ED deadlines.') %}
+      {% set _ = recs.append('Public-facing ASA: ensure Parts 1-3 complete
+                             and submit core dump per ED deadlines.') %}
       {% endif %}
       {% if _support == 'eos_2025_09_30_or_earlier' %}
-      {% set _ = recs.append('End-of-support by 2025-09-30: permanently disconnect by deadline or document exception path.') %}
+      {% set _ = recs.append('End-of-support by 2025-09-30: permanently
+                             disconnect by deadline or document exception
+                             path.') %}
       {% elif _support == 'eos_2026_08_31' %}
-      {% set _ = recs.append('End-of-support 2026-08-31: apply latest updates by ED deadline and within 48h of release going forward.') %}
+      {% set _ = recs.append('End-of-support 2026-08-31: apply latest
+                             updates by ED deadline and within 48h of
+                             release going forward.') %}
       {% endif %}
       {{ recs }}
 
