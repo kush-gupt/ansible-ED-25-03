@@ -47,15 +47,18 @@ runs:
       id: build
       shell: bash
       run: |
-        # Create build directory at repo root
+        # Create build directory at repo root and get absolute path
         mkdir -p build
+        BUILD_DIR=$(pwd)/build
+        echo "Build directory: $BUILD_DIR"
+        
         cd ${{ inputs.collection-path }}
-        ansible-galaxy collection build --output-path ../../../build/
+        ansible-galaxy collection build --output-path "$BUILD_DIR"
         ARTIFACT_NAME="${{ inputs.collection-namespace }}-${{ inputs.collection-name }}-${{ steps.version.outputs.version }}.tar.gz"
         echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
         echo "artifact-path=build/$ARTIFACT_NAME" >> $GITHUB_OUTPUT
         echo "Built collection: $ARTIFACT_NAME"
-        ls -la ../../../build/
+        ls -la "$BUILD_DIR"
 
     - name: Install collection for linting
       if: inputs.install-for-linting == 'true'
@@ -64,4 +67,14 @@ runs:
         # Install from the correct path
         ARTIFACT_PATH="build/${{ inputs.collection-namespace }}-${{ inputs.collection-name }}-${{ steps.version.outputs.version }}.tar.gz"
         echo "Installing collection from: $ARTIFACT_PATH"
-        ansible-galaxy collection install "$ARTIFACT_PATH" --force
+        echo "Current directory: $(pwd)"
+        echo "Checking if file exists:"
+        ls -la build/
+        
+        if [ -f "$ARTIFACT_PATH" ]; then
+          echo "File found, installing..."
+          ansible-galaxy collection install "$ARTIFACT_PATH" --force
+        else
+          echo "ERROR: Collection artifact not found at $ARTIFACT_PATH"
+          exit 1
+        fi
