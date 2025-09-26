@@ -1,10 +1,8 @@
 ---
 galaxy_info:
   author: CISA ED-25-03 Maintainers
-  description: Collect ASA artifacts per ED 25-03
+  description: Generate consolidated ED 25-03 assessment reports
   license: Apache-2.0
   min_ansible_version: 2.15.0
 dependencies: []
-collections:
-  - cisco.asa
-  - ansible.netcommon
+collections: []
