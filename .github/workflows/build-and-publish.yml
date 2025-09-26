@@ -20,6 +20,9 @@ jobs:
     name: Lint and Test Collection
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Ansible Environment
         uses: ./.github/actions/setup-ansible
         with:
@@ -47,6 +50,9 @@ jobs:
       collection-version: ${{ steps.build-collection.outputs.version }}
       artifact-path: ${{ steps.build-collection.outputs.artifact-path }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Ansible Environment
         uses: ./.github/actions/setup-ansible
 
@@ -72,6 +78,9 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     environment: production
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Ansible Environment
         uses: ./.github/actions/setup-ansible
 
