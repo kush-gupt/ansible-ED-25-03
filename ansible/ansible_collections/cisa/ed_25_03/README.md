@@ -7,7 +7,7 @@ Reference: [CISA ED 25-03: Core Dump & Hunt Instructions](https://www.cisa.gov/n
 Important: Follow CISA's guidance exactly and in order. Deviations may trigger anti-forensics and destroy evidence. This automation aims to issue exact CLI commands without tab completion or autocomplete.
 
 Prerequisites
-- Ansible 2.14+
+- Ansible 2.15+
 - Collections: `cisco.asa`, `ansible.netcommon`
 - Connectivity to Cisco ASA via SSH using `network_cli`
 
