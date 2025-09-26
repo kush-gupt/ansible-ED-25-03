@@ -1,0 +1,62 @@
+name: 'Build Ansible Collection'
+description: 'Builds Ansible collection and extracts version information'
+
+inputs:
+  collection-path:
+    description: 'Path to the collection directory'
+    required: true
+  collection-namespace:
+    description: 'Collection namespace'
+    required: true
+  collection-name:
+    description: 'Collection name'
+    required: true
+  install-for-linting:
+    description: 'Whether to install the built collection for linting'
+    required: false
+    default: 'false'
+
+outputs:
+  version:
+    description: 'Collection version from galaxy.yml'
+    value: ${{ steps.version.outputs.version }}
+  artifact-name:
+    description: 'Name of the built collection artifact'
+    value: ${{ steps.build.outputs.artifact-name }}
+  artifact-path:
+    description: 'Path to the built collection artifact'
+    value: ${{ steps.build.outputs.artifact-path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Extract version from galaxy.yml
+      id: version
+      shell: bash
+      run: |
+        VERSION=$(python -c "
+        import yaml
+        with open('${{ inputs.collection-path }}/galaxy.yml', 'r') as f:
+            data = yaml.safe_load(f)
+        print(data['version'])
+        ")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Collection version: $VERSION"
+
+    - name: Build collection
+      id: build
+      shell: bash
+      run: |
+        cd ${{ inputs.collection-path }}
+        ansible-galaxy collection build --output-path ../../../build/
+        ARTIFACT_NAME="${{ inputs.collection-namespace }}-${{ inputs.collection-name }}-${{ steps.version.outputs.version }}.tar.gz"
+        echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+        echo "artifact-path=build/$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+        echo "Built collection: $ARTIFACT_NAME"
+        ls -la ../../../build/
+
+    - name: Install collection for linting
+      if: inputs.install-for-linting == 'true'
+      shell: bash
+      run: |
+        ansible-galaxy collection install build/*.tar.gz --force

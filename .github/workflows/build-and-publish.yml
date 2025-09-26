@@ -20,68 +20,23 @@ jobs:
     name: Lint and Test Collection
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Setup Ansible Environment
+        uses: ./.github/actions/setup-ansible
         with:
-          python-version: '3.11'
+          install-lint-tools: 'true'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible-core>=2.14
-          pip install ansible-lint
-          pip install yamllint
+      - name: Build and Install Collection
+        uses: ./.github/actions/build-collection
+        with:
+          collection-path: ${{ env.COLLECTION_PATH }}
+          collection-namespace: ${{ env.COLLECTION_NAMESPACE }}
+          collection-name: ${{ env.COLLECTION_NAME }}
+          install-for-linting: 'true'
 
-      - name: Install collection dependencies
-        run: |
-          ansible-galaxy collection install -r ansible/requirements.yml --force
-        continue-on-error: true
-
-      - name: Build and install collection for linting
-        run: |
-          cd ${{ env.COLLECTION_PATH }}
-          ansible-galaxy collection build --output-path ../../../build/
-          cd ../../../
-          ansible-galaxy collection install build/*.tar.gz --force
-        continue-on-error: true
-
-      - name: Run ansible-lint on collection
-        run: |
-          ansible-lint ${{ env.COLLECTION_PATH }}
-        continue-on-error: true
-
-      - name: Run ansible-lint on playbooks
-        run: |
-          cd ansible
-          ansible-lint --config-file .ansible-lint playbooks/
-        continue-on-error: true
-
-      - name: Run yamllint on collection
-        run: |
-          yamllint ${{ env.COLLECTION_PATH }}
-        continue-on-error: true
-
-      - name: Validate galaxy.yml
-        run: |
-          python -c "
-          import yaml
-          import sys
-          try:
-              with open('${{ env.COLLECTION_PATH }}/galaxy.yml', 'r') as f:
-                  data = yaml.safe_load(f)
-              required_fields = ['namespace', 'name', 'version', 'description', 'authors']
-              for field in required_fields:
-                  if field not in data or not data[field]:
-                      print(f'Missing or empty required field: {field}')
-                      sys.exit(1)
-              print('galaxy.yml validation passed')
-          except Exception as e:
-              print(f'galaxy.yml validation failed: {e}')
-              sys.exit(1)
-          "
+      - name: Validate Collection
+        uses: ./.github/actions/validate-collection
+        with:
+          collection-path: ${{ env.COLLECTION_PATH }}
 
   build:
     name: Build Collection
@@ -89,44 +44,19 @@ jobs:
     needs: lint-and-test
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     outputs:
-      collection-version: ${{ steps.build.outputs.version }}
-      artifact-path: ${{ steps.build.outputs.artifact }}
+      collection-version: ${{ steps.build-collection.outputs.version }}
+      artifact-path: ${{ steps.build-collection.outputs.artifact-path }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Setup Ansible Environment
+        uses: ./.github/actions/setup-ansible
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Build Collection
+        id: build-collection
+        uses: ./.github/actions/build-collection
         with:
-          python-version: '3.11'
-
-      - name: Install Ansible
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible-core>=2.14
-
-      - name: Extract version from galaxy.yml
-        id: version
-        run: |
-          VERSION=$(python -c "
-          import yaml
-          with open('${{ env.COLLECTION_PATH }}/galaxy.yml', 'r') as f:
-              data = yaml.safe_load(f)
-          print(data['version'])
-          ")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Collection version: $VERSION"
-
-      - name: Build collection
-        id: build
-        run: |
-          cd ${{ env.COLLECTION_PATH }}
-          ansible-galaxy collection build --output-path ../../../build/
-          ARTIFACT_NAME="${{ env.COLLECTION_NAMESPACE }}-${{ env.COLLECTION_NAME }}-${{ steps.version.outputs.version }}.tar.gz"
-          echo "version=${{ steps.version.outputs.version }}" >> $GITHUB_OUTPUT
-          echo "artifact=build/$ARTIFACT_NAME" >> $GITHUB_OUTPUT
-          echo "Built collection: $ARTIFACT_NAME"
-          ls -la ../../../build/
+          collection-path: ${{ env.COLLECTION_PATH }}
+          collection-namespace: ${{ env.COLLECTION_NAMESPACE }}
+          collection-name: ${{ env.COLLECTION_NAME }}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -142,18 +72,8 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     environment: production
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install Ansible
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible-core>=2.14
+      - name: Setup Ansible Environment
+        uses: ./.github/actions/setup-ansible
 
       - name: Download build artifact
         uses: actions/download-artifact@v4

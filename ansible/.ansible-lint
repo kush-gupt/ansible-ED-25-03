@@ -5,10 +5,6 @@ exclude_paths:
   - .github/
   - .ansible/
 
-# Skip variable naming rules to allow user-friendly variable names that match readme.md
-skip_list:
-  - var-naming[no-role-prefix]  # Allow variables without role prefix for user-friendly naming
-
 # Use default rules otherwise
 use_default_rules: true
 
