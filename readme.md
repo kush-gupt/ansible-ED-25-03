@@ -25,7 +25,7 @@ This repository contains Ansible content that automates key steps from CISA's Su
 # Install required collections
 ansible-galaxy collection install -r ansible/requirements.yml
 
-# Verify Ansible version (requires 2.14+)
+# Verify Ansible version (requires 2.15+)
 ansible --version
 ```
 
