@@ -24,7 +24,7 @@ ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:latest
 ## Included Components
 
 ### Base Image
-- `quay.io/ansible/ansible-runner:latest`
+- `quay.io/ansible/creator-base:latest`
 
 ### Ansible Collections
 - `cisco.asa` (>=5.0.0)
@@ -138,7 +138,7 @@ The execution environment is defined by these files:
 - `requirements.yml` - Ansible collection dependencies
 - `requirements.txt` - Python package dependencies
 - `bindep.txt` - System package dependencies
-- `_build/configs/ansible.cfg` - Ansible configuration
+- `ansible.cfg` - Ansible configuration (copied from `_build/configs/` during build)
 
 ## Support
 

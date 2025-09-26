@@ -3,7 +3,7 @@ version: 3
 
 images:
   base_image:
-    name: quay.io/ansible/ansible-runner:latest
+    name: quay.io/ansible/creator-base:latest
 
 dependencies:
   galaxy: requirements.yml
@@ -15,7 +15,7 @@ additional_build_steps:
     - RUN whoami
     - RUN cat /etc/os-release
   prepend_galaxy:
-    - COPY _build/configs/ansible.cfg /etc/ansible/
+    - COPY ansible.cfg /etc/ansible/
   prepend_final:
     - RUN ls -la /usr/share/ansible/collections/
     - RUN ansible-galaxy collection list
