@@ -47,6 +47,8 @@ runs:
       id: build
       shell: bash
       run: |
+        # Create build directory at repo root
+        mkdir -p build
         cd ${{ inputs.collection-path }}
         ansible-galaxy collection build --output-path ../../../build/
         ARTIFACT_NAME="${{ inputs.collection-namespace }}-${{ inputs.collection-name }}-${{ steps.version.outputs.version }}.tar.gz"
@@ -59,4 +61,7 @@ runs:
       if: inputs.install-for-linting == 'true'
       shell: bash
       run: |
-        ansible-galaxy collection install build/*.tar.gz --force
+        # Install from the correct path
+        ARTIFACT_PATH="build/${{ inputs.collection-namespace }}-${{ inputs.collection-name }}-${{ steps.version.outputs.version }}.tar.gz"
+        echo "Installing collection from: $ARTIFACT_PATH"
+        ansible-galaxy collection install "$ARTIFACT_PATH" --force
