@@ -16,12 +16,12 @@
   cisco.asa.asa_command:
     commands:
       - show version
-  register: version_out
+  register: collect_artifacts_version_out
 
 - name: Save 'show version' output
   ansible.builtin.copy:
     dest: "{{ collect_artifacts_ed_25_03_output_dir }}/show_version.txt"
-    content: "{{ version_out.stdout[0] | default('') }}\n"
+    content: "{{ collect_artifacts_version_out.stdout[0] | default('') }}\n"
     mode: "0644"
   delegate_to: localhost
 
@@ -29,12 +29,12 @@
   cisco.asa.asa_command:
     commands:
       - show checkheaps
-  register: checkheaps_1
+  register: collect_artifacts_checkheaps_1
 
 - name: Save checkheaps pre output
   ansible.builtin.copy:
     dest: "{{ collect_artifacts_ed_25_03_output_dir }}/checkheaps_1.txt"
-    content: "{{ checkheaps_1.stdout[0] | default('') }}\n"
+    content: "{{ collect_artifacts_checkheaps_1.stdout[0] | default('') }}\n"
     mode: "0644"
   delegate_to: localhost
 
@@ -47,41 +47,41 @@
   cisco.asa.asa_command:
     commands:
       - show checkheaps
-  register: checkheaps_2
+  register: collect_artifacts_checkheaps_2
 
 - name: Save checkheaps post output
   ansible.builtin.copy:
     dest: "{{ collect_artifacts_ed_25_03_output_dir }}/checkheaps_2.txt"
-    content: "{{ checkheaps_2.stdout[0] | default('') }}\n"
+    content: "{{ collect_artifacts_checkheaps_2.stdout[0] | default('') }}\n"
     mode: "0644"
   delegate_to: localhost
 
 - name: Parse Total number of runs from pre
   ansible.builtin.set_fact:
-    ed25_runs_1: >
-      {{ (checkheaps_1.stdout[0] |
+    collect_artifacts_ed25_runs_1: >
+      {{ (collect_artifacts_checkheaps_1.stdout[0] |
           regex_search('Total\\s+number\\s+of\\s+runs\\s*:?\\s*(\\d+)',
                        '\\1')) |
          default('0') | int }}
 
 - name: Parse Total number of runs from post
   ansible.builtin.set_fact:
-    ed25_runs_2: >
-      {{ (checkheaps_2.stdout[0] |
+    collect_artifacts_ed25_runs_2: >
+      {{ (collect_artifacts_checkheaps_2.stdout[0] |
           regex_search('Total\\s+number\\s+of\\s+runs\\s*:?\\s*(\\d+)',
                        '\\1')) |
          default('0') | int }}
 
 - name: Evaluate increase in runs
   ansible.builtin.set_fact:
-    ed25_checkheaps_increased: "{{ ed25_runs_2 > ed25_runs_1 }}"
+    collect_artifacts_ed25_checkheaps_increased: "{{ collect_artifacts_ed25_runs_2 > collect_artifacts_ed25_runs_1 }}"
 
 - name: Save checkheaps summary JSON
   ansible.builtin.copy:
     dest: "{{ collect_artifacts_ed_25_03_output_dir }}/checkheaps_summary.json"
     content: >
-      {{ {'runs_pre': ed25_runs_1, 'runs_post': ed25_runs_2,
-          'increased': ed25_checkheaps_increased} | to_nice_json }}
+      {{ {'runs_pre': collect_artifacts_ed25_runs_1, 'runs_post': collect_artifacts_ed25_runs_2,
+          'increased': collect_artifacts_ed25_checkheaps_increased} | to_nice_json }}
     mode: "0644"
   delegate_to: localhost
 
@@ -89,7 +89,7 @@
   cisco.asa.asa_command:
     commands:
       - show tech-support detail
-  register: show_tech
+  register: collect_artifacts_show_tech
   vars:
     ansible_command_timeout: "{{ collect_artifacts_ed_25_03_command_timeout }}"
 
@@ -97,7 +97,7 @@
   ansible.builtin.copy:
     dest: >
       {{ collect_artifacts_ed_25_03_output_dir }}/show_tech_support_detail.txt
-    content: "{{ show_tech.stdout[0] | default('') }}\n"
+    content: "{{ collect_artifacts_show_tech.stdout[0] | default('') }}\n"
     mode: "0600"
   delegate_to: localhost
 
@@ -106,19 +106,19 @@
     commands:
       - >
         more /binary system:/text | grep 55534154 41554156 41575756 488bb3a0
-  register: implant_check
+  register: collect_artifacts_implant_check
 
 - name: Save implant check output
   ansible.builtin.copy:
     dest: "{{ collect_artifacts_ed_25_03_output_dir }}/implant_check.txt"
     content: |
-      {{ implant_check.stdout[0] | default('') }}
+      {{ collect_artifacts_implant_check.stdout[0] | default('') }}
     mode: "0644"
   delegate_to: localhost
 - name: Set compromised flag if any implant output is present
   ansible.builtin.set_fact:
-    ed25_compromised: >
-      {{ (implant_check.stdout[0] | default('') | trim) != '' }}
+    collect_artifacts_ed25_compromised: >
+      {{ (collect_artifacts_implant_check.stdout[0] | default('') | trim) != '' }}
 
 - name: Save artifact summary JSON
   ansible.builtin.copy:
@@ -126,11 +126,11 @@
     content: |
       {{ {
         'checkheaps': {
-          'runs_pre': ed25_runs_1,
-          'runs_post': ed25_runs_2,
-          'increased': ed25_checkheaps_increased
+          'runs_pre': collect_artifacts_ed25_runs_1,
+          'runs_post': collect_artifacts_ed25_runs_2,
+          'increased': collect_artifacts_ed25_checkheaps_increased
         },
-        'implant_detected': ed25_compromised
+        'implant_detected': collect_artifacts_ed25_compromised
       } | to_nice_json }}
     mode: "0644"
   delegate_to: localhost

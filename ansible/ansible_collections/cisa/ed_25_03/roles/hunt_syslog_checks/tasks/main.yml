@@ -20,12 +20,12 @@
          default('/var/log') }}
     patterns: "{{ hunt_syslog_checks_asa_syslog_glob | basename }}"
     use_regex: false
-  register: syslog_files
+  register: hunt_syslog_checks_syslog_files
   delegate_to: localhost
 
 - name: Initialize counters
   ansible.builtin.set_fact:
-    ed25_syslog_counts: {
+    hunt_syslog_checks_ed25_syslog_counts: {
       '302013': 0, '302014': 0, '710005': 0, '609002': 0,
       '722029': 0, '722030': 0, '722031': 0
     }
@@ -38,21 +38,21 @@
     awk -F- '{print $3}' | sort | uniq -c
   args:
     executable: /bin/bash
-  register: counts_out
+  register: hunt_syslog_checks_counts_out
   changed_when: false
-  loop: "{{ syslog_files.files }}"
+  loop: "{{ hunt_syslog_checks_syslog_files.files }}"
   loop_control:
     label: "{{ item.path }}"
   delegate_to: localhost
 
 - name: Aggregate counts
   ansible.builtin.set_fact:
-    ed25_syslog_counts: >
-      {{ ed25_syslog_counts | combine(_agg, recursive=True) }}
+    hunt_syslog_checks_ed25_syslog_counts: >
+      {{ hunt_syslog_checks_ed25_syslog_counts | combine(_agg, recursive=True) }}
   vars:
     _agg: |
-      {% set acc = ed25_syslog_counts.copy() %}
-      {% for r in counts_out.results | default([]) %}
+      {% set acc = hunt_syslog_checks_ed25_syslog_counts.copy() %}
+      {% for r in hunt_syslog_checks_counts_out.results | default([]) %}
       {% for line in (r.stdout | default('')).split('\n') if line|trim %}
       {% set parts = line.split() %}
       {% if parts|length == 2 and parts[1] in acc %}
@@ -69,6 +69,6 @@
     dest: >
       {{ (playbook_dir | default('.')) + '/artifacts/' + inventory_hostname +
          '/syslog_counts.json' }}
-    content: "{{ ed25_syslog_counts | to_nice_json }}\n"
+    content: "{{ hunt_syslog_checks_ed25_syslog_counts | to_nice_json }}\n"
     mode: "0644"
   delegate_to: localhost

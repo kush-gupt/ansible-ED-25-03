@@ -48,13 +48,13 @@
   cisco.asa.asa_command:
     commands:
       - crashinfo force page-fault
-  register: crash_cmd
+  register: core_dump_crash_cmd
   ignore_errors: true
 
 - name: Save crash command output
   ansible.builtin.copy:
     dest: "{{ core_dump_ed_25_03_output_dir }}/core_dump_trigger_output.txt"
-    content: "{{ crash_cmd.stdout | default([]) | join('\n') }}\n"
+    content: "{{ core_dump_crash_cmd.stdout | default([]) | join('\n') }}\n"
     mode: "0644"
   delegate_to: localhost
 

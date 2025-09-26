@@ -2,37 +2,37 @@
 - name: Read version assessment
   ansible.builtin.slurp:
     src: "{{ ed_25_03_output_dir }}/version_assessment.json"
-  register: vass
+  register: report_vass
   delegate_to: localhost
   ignore_errors: true
 
 - name: Read artifact summary
   ansible.builtin.slurp:
     src: "{{ ed_25_03_output_dir }}/artifact_summary.json"
-  register: art
+  register: report_art
   delegate_to: localhost
   ignore_errors: true
 
 - name: Read syslog counts
   ansible.builtin.slurp:
     src: "{{ ed_25_03_output_dir }}/syslog_counts.json"
-  register: sysc
+  register: report_sysc
   delegate_to: localhost
   ignore_errors: true
 
 - name: Assemble consolidated report structure
   vars:
     _vass: >
-      {{ (vass.content | default('') | b64decode | default('{}')) |
+      {{ (report_vass.content | default('') | b64decode | default('{}')) |
          from_json | default({}) }}
     _art: >
-      {{ (art.content | default('') | b64decode | default('{}')) |
+      {{ (report_art.content | default('') | b64decode | default('{}')) |
          from_json | default({}) }}
     _sys: >
-      {{ (sysc.content | default('') | b64decode | default('{}')) |
+      {{ (report_sysc.content | default('') | b64decode | default('{}')) |
          from_json | default({}) }}
   ansible.builtin.set_fact:
-    ed25_report:
+    report_ed25_report:
       host: "{{ inventory_hostname }}"
       version_assessment: "{{ _vass }}"
       artifacts: "{{ _art }}"
@@ -40,14 +40,14 @@
 
 - name: "Add ED 25-03 recommended next actions (advisory)"
   ansible.builtin.set_fact:
-    ed25_report: "{{ ed25_report | combine({'recommendations': _recs}) }}"
+    report_ed25_report: "{{ report_ed25_report | combine({'recommendations': _recs}) }}"
   vars:
     _compromised: >
-      {{ ed25_report.artifacts.implant_detected | default(false) }}
+      {{ report_ed25_report.artifacts.implant_detected | default(false) }}
     _is_public: >
-      {{ ed25_report.version_assessment.is_public_facing | default(false) }}
+      {{ report_ed25_report.version_assessment.is_public_facing | default(false) }}
     _support: >
-      {{ ed25_report.version_assessment.support_status | default('unknown') }}
+      {{ report_ed25_report.version_assessment.support_status | default('unknown') }}
     _recs: |
       {% set recs = [] %}
       {% if _compromised %}
@@ -75,7 +75,7 @@
 
 - name: Save consolidated report JSON
   ansible.builtin.copy:
-    dest: "{{ ed_25_03_output_dir }}/ed25_report.json"
-    content: "{{ ed25_report | to_nice_json }}\n"
+    dest: "{{ ed_25_03_output_dir }}/report_ed25_report.json"
+    content: "{{ report_ed25_report | to_nice_json }}\n"
     mode: "0644"
   delegate_to: localhost
