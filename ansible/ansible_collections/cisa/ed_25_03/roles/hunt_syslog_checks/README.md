@@ -4,7 +4,7 @@ Local helper to analyze exported ASA syslogs for key message IDs mentioned in ED
 
 Vars
 ```
-asa_syslog_glob: "/var/log/asa/*.log"
+hunt_syslog_checks_asa_syslog_glob: "/var/log/asa/*.log"
 ```
 
 Note: This role runs on the control node and expects logs already exported from ASA or your SIEM.

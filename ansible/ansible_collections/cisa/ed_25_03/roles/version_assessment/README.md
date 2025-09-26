@@ -6,10 +6,10 @@ Auto-detects device type from show version output and outputs `version_assessmen
 
 Vars
 ```
-ed25_device_type: asa | asa-sm | asav | ftd | unknown (auto-detected if not specified)
-ed25_is_public_facing: false
-ed25_support_status: supported | eos_2025_09_30_or_earlier | eos_2026_08_31 | unknown
-ed25_support_end_date: ""
+version_assessment_ed25_device_type: asa | asa-sm | asav | ftd | unknown (auto-detected if not specified)
+version_assessment_ed25_is_public_facing: false
+version_assessment_ed25_support_status: supported | eos_2025_09_30_or_earlier | eos_2026_08_31 | unknown
+version_assessment_ed25_support_end_date: ""
 ```
 
 References:

@@ -1,0 +1,12 @@
+---
+# Ansible Lint configuration
+exclude_paths:
+  - .cache/  # implicit unless exclude_paths is defined in config
+  - .github/
+  - .ansible/
+
+# Use default rules otherwise
+use_default_rules: true
+
+# Enable offline mode to avoid downloading rules
+offline: false

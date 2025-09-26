@@ -1,26 +1,31 @@
 ---
-# This role provides local helper tasks to scan exported ASA syslogs on the control node
-# for message IDs of interest per ED 25-03 (302013, 302014, 710005, 609002) and missing patterns.
+# This role provides local helper tasks to scan exported ASA syslogs on the
+# control node for message IDs of interest per ED 25-03 (302013, 302014,
+# 710005, 609002) and missing patterns.
 
 - name: Ensure local syslog path is provided
   ansible.builtin.assert:
     that:
-      - asa_syslog_glob is defined
-      - asa_syslog_glob | length > 0
-    fail_msg: "Set asa_syslog_glob to a glob of local ASA syslog files (on control node)."
+      - hunt_syslog_checks_asa_syslog_glob is defined
+      - hunt_syslog_checks_asa_syslog_glob | length > 0
+    fail_msg: >
+      Set hunt_syslog_checks_asa_syslog_glob to a glob of local ASA syslog
+      files (on control node).
   delegate_to: localhost
 
 - name: Find syslog files
   ansible.builtin.find:
-    paths: "{{ (asa_syslog_glob | dirname) | default('/var/log') }}"
-    patterns: "{{ asa_syslog_glob | basename }}"
+    paths: >
+      {{ (hunt_syslog_checks_asa_syslog_glob | dirname) |
+         default('/var/log') }}
+    patterns: "{{ hunt_syslog_checks_asa_syslog_glob | basename }}"
     use_regex: false
-  register: syslog_files
+  register: hunt_syslog_checks_syslog_files
   delegate_to: localhost
 
 - name: Initialize counters
   ansible.builtin.set_fact:
-    ed25_syslog_counts: {
+    hunt_syslog_checks_ed25_syslog_counts: {
       '302013': 0, '302014': 0, '710005': 0, '609002': 0,
       '722029': 0, '722030': 0, '722031': 0
     }
@@ -29,27 +34,33 @@
 - name: Count message IDs in each file
   ansible.builtin.shell: |
     set -o pipefail
-    (grep -Eo '%ASA-[0-9]-[0-9]+' "{{ item.path }}" || true) | awk -F- '{print $3}' | sort | uniq -c
+    (grep -Eo '%ASA-[0-9]-[0-9]+' "{{ item.path }}" || true) |
+    awk -F- '{print $3}' | sort | uniq -c
   args:
     executable: /bin/bash
-  register: counts_out
+  register: hunt_syslog_checks_counts_out
   changed_when: false
-  loop: "{{ syslog_files.files }}"
+  loop: "{{ hunt_syslog_checks_syslog_files.files }}"
   loop_control:
     label: "{{ item.path }}"
   delegate_to: localhost
 
 - name: Aggregate counts
   ansible.builtin.set_fact:
-    ed25_syslog_counts: "{{ ed25_syslog_counts | combine(_agg, recursive=True) }}"
+    hunt_syslog_checks_ed25_syslog_counts: >
+      {{
+        hunt_syslog_checks_ed25_syslog_counts |
+        combine(_agg, recursive=True)
+      }}
   vars:
     _agg: |
-      {% set acc = ed25_syslog_counts.copy() %}
-      {% for r in counts_out.results | default([]) %}
+      {% set acc = hunt_syslog_checks_ed25_syslog_counts.copy() %}
+      {% for r in hunt_syslog_checks_counts_out.results | default([]) %}
       {% for line in (r.stdout | default('')).split('\n') if line|trim %}
       {% set parts = line.split() %}
       {% if parts|length == 2 and parts[1] in acc %}
-      {% set _ = acc.update({ parts[1]: (acc[parts[1]] | int) + (parts[0] | int) }) %}
+      {% set _ = acc.update({ parts[1]: (acc[parts[1]] | int) +
+                              (parts[0] | int) }) %}
       {% endif %}
       {% endfor %}
       {% endfor %}
@@ -58,7 +69,9 @@
 
 - name: Save counts JSON
   ansible.builtin.copy:
-    dest: "{{ (playbook_dir | default('.')) + '/artifacts/' + inventory_hostname + '/syslog_counts.json' }}"
-    content: "{{ ed25_syslog_counts | to_nice_json }}\n"
+    dest: >
+      {{ (playbook_dir | default('.')) + '/artifacts/' + inventory_hostname +
+         '/syslog_counts.json' }}
+    content: "{{ hunt_syslog_checks_ed25_syslog_counts | to_nice_json }}\n"
     mode: "0644"
   delegate_to: localhost

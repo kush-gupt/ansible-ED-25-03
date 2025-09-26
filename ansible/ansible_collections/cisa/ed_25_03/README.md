@@ -32,12 +32,12 @@ Roles
 - `version_assessment`: Parses ASA version and flags likely vulnerability to CVE-2025-20333 and train safety (>=9.20).
 - `report`: Aggregates results into `ed25_report.json` with advisory next steps aligned to ED 25-03.
 
-Playbooks (examples)
-- `playbooks/collect_artifacts.yml`
-- `playbooks/core_dump.yml`
-- `playbooks/patch_checks.yml`
-- `playbooks/hunt_syslog_checks.yml`
-- `playbooks/assess_and_report.yml`
+Playbooks (examples - located in `../../playbooks/`)
+- `collect_artifacts.yml`
+- `core_dump.yml`
+- `patch_checks.yml`
+- `hunt_syslog_checks.yml`
+- `assess_and_report.yml`
 
 Legal and Risk Notice
 - Use at your own risk. This may disrupt production traffic and trigger device reloads when core dump is executed.

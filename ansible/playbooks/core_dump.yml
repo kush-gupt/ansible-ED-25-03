@@ -3,4 +3,4 @@
   hosts: asa
   gather_facts: false
   roles:
-    - role: core_dump
+    - role: kush_gupt.ed_25_03.core_dump

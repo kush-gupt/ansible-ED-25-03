@@ -1,0 +1,10 @@
+---
+- name: ED 25-03 Assessment and Report
+  hosts: asa
+  gather_facts: false
+  roles:
+    - kush_gupt.ed_25_03.version_assessment
+    - kush_gupt.ed_25_03.collect_artifacts
+    - kush_gupt.ed_25_03.patch_checks
+    - kush_gupt.ed_25_03.hunt_syslog_checks
+    - kush_gupt.ed_25_03.report
