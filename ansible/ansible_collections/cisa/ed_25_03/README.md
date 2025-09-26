@@ -44,7 +44,7 @@ Usage:
 # Run a specific playbook from the collection
 ansible-playbook kush_gupt.ed_25_03.collect_artifacts
 
-# Or run using the full path
+# Or, to run from a local clone of this repository:
 ansible-playbook ansible_collections/cisa/ed_25_03/playbooks/collect_artifacts.yml
 ```
 
