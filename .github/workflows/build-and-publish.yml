@@ -109,8 +109,7 @@ jobs:
           echo "Publishing collection: $COLLECTION_FILE"
           
           ansible-galaxy collection publish "$COLLECTION_FILE" \
-            --api-key "$ANSIBLE_GALAXY_API_KEY" \
-            --wait
+            --api-key "$ANSIBLE_GALAXY_API_KEY"
 
       - name: Verify publication
         run: |
