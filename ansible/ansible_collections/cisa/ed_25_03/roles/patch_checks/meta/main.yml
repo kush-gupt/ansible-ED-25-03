@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  author: CISA ED-25-03 Maintainers
+  author: Kush Gupta
   description: Check for firmware update logs and patching evidence
   license: Apache-2.0
   min_ansible_version: 2.15.0
