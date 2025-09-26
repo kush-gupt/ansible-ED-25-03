@@ -19,7 +19,7 @@ runs:
       run: |
         if [ -d "${{ inputs.collection-path }}/playbooks" ]; then
           cd ansible
-          ansible-lint --config-file .ansible-lint ${{ inputs.collection-path }}/playbooks/
+          ansible-lint --config-file .ansible-lint ansible_collections/cisa/ed_25_03/playbooks/
         else
           echo "No playbooks directory found in collection, skipping playbook linting"
         fi
