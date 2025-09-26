@@ -14,11 +14,15 @@ runs:
       run: |
         ansible-lint ${{ inputs.collection-path }}
 
-    - name: Run ansible-lint on playbooks
+    - name: Run ansible-lint on collection playbooks
       shell: bash
       run: |
-        cd ansible
-        ansible-lint --config-file .ansible-lint playbooks/
+        if [ -d "${{ inputs.collection-path }}/playbooks" ]; then
+          cd ansible
+          ansible-lint --config-file .ansible-lint ${{ inputs.collection-path }}/playbooks/
+        else
+          echo "No playbooks directory found in collection, skipping playbook linting"
+        fi
 
     - name: Run yamllint on collection
       shell: bash
