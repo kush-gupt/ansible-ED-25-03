@@ -1,3 +1,4 @@
+---
 namespace: kush_gupt
 name: ed_25_03
 version: 0.1.0
@@ -5,7 +6,9 @@ readme: README.md
 repository: https://github.com/kush-gupt/ansible-ED-25-03
 authors:
   - "ED-25-03 Automation Maintainers"
-description: "Automations for CISA Supplemental Direction ED 25-03 Core Dump & Hunt (Cisco ASA)"
+description: >
+  Automations for CISA Supplemental Direction ED 25-03 Core Dump & Hunt
+  (Cisco ASA)
 license:
   - Apache-2.0
 tags:
@@ -13,9 +16,8 @@ tags:
   - asa
   - cisco
   - security
-  - incident-response
+  - incident_response
   - forensics
 dependencies:
   ansible.netcommon: ">=6.0.0"
   cisco.asa: ">=5.0.0"
-

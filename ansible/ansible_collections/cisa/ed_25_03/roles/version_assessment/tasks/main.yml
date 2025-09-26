@@ -20,7 +20,9 @@
 
 - name: Parse version components (best-effort)
   vars:
-    m: "{{ asa_version_text | regex_search('Cisco Adaptive Security Appliance Software Version\\s+([0-9]+\\.[0-9]+\\.[0-9]+(?:\\.[0-9]+)?)', '\\1') }}"
+    m: >
+      {{ asa_version_text | regex_search('Cisco Adaptive Security Appliance
+      Software Version\\s+([0-9]+\\.[0-9]+\\.[0-9]+(?:\\.[0-9]+)?)', '\\1') }}
   ansible.builtin.set_fact:
     asa_version_parsed: "{{ m | default('') }}"
 
@@ -31,7 +33,8 @@
       asav
       {%- elif 'Firepower' in asa_version_text -%}
       ftd
-      {%- elif 'ASA-SM' in asa_version_text or 'Service Module' in asa_version_text -%}
+      {%- elif 'ASA-SM' in asa_version_text or
+               'Service Module' in asa_version_text -%}
       asa-sm
       {%- elif 'Adaptive Security Appliance' in asa_version_text -%}
       asa
@@ -41,20 +44,28 @@
 
 - name: Determine potential vulnerability to CVE-2025-20333 (RCE)
   ansible.builtin.set_fact:
-    ed25_vuln_cve_2025_20333: "{{ asa_version_parsed != '' and (asa_version_parsed is version('9.20', '<')) }}"
+    ed25_vuln_cve_2025_20333: >
+      {{ asa_version_parsed != '' and
+         (asa_version_parsed is version('9.20', '<')) }}
 
-- name: Determine potential vulnerability to CVE-2025-20362 (Privilege Escalation)
+- name: Determine potential vulnerability to CVE-2025-20362 (Priv Esc)
   ansible.builtin.set_fact:
-    ed25_vuln_cve_2025_20362: "{{ asa_version_parsed != '' and (asa_version_parsed is version('9.20', '<')) }}"
+    ed25_vuln_cve_2025_20362: >
+      {{ asa_version_parsed != '' and
+         (asa_version_parsed is version('9.20', '<')) }}
 
 - name: Determine vulnerable trains related to handler removal notes
   ansible.builtin.set_fact:
-    ed25_handler_removed_safe: "{{ asa_version_parsed != '' and (asa_version_parsed is version('9.20', '>=')) }}"
+    ed25_handler_removed_safe: >
+      {{ asa_version_parsed != '' and
+         (asa_version_parsed is version('9.20', '>=')) }}
 
 - name: Build assessment summary
   ansible.builtin.set_fact:
     ed25_version_assessment:
-      device_type: "{{ version_assessment_ed25_device_type | default(ed25_detected_device_type) }}"
+      device_type: >
+        {{ version_assessment_ed25_device_type |
+           default(ed25_detected_device_type) }}
       device_type_detected: "{{ ed25_detected_device_type }}"
       is_public_facing: "{{ version_assessment_ed25_is_public_facing }}"
       support_status: "{{ version_assessment_ed25_support_status }}"

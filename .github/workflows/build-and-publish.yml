@@ -40,10 +40,23 @@ jobs:
           ansible-galaxy collection install -r ansible/requirements.yml --force
         continue-on-error: true
 
-      - name: Run ansible-lint
+      - name: Build and install collection for linting
+        run: |
+          cd ${{ env.COLLECTION_PATH }}
+          ansible-galaxy collection build --output-path ../../../build/
+          cd ../../../
+          ansible-galaxy collection install build/*.tar.gz --force
+        continue-on-error: true
+
+      - name: Run ansible-lint on collection
+        run: |
+          ansible-lint ${{ env.COLLECTION_PATH }}
+        continue-on-error: true
+
+      - name: Run ansible-lint on playbooks
         run: |
           cd ansible
-          ansible-lint --config-file .ansible-lint
+          ansible-lint --config-file .ansible-lint playbooks/
         continue-on-error: true
 
       - name: Run yamllint on collection
@@ -116,7 +129,7 @@ jobs:
           ls -la ../../../build/
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ansible-collection
           path: build/*.tar.gz
@@ -143,7 +156,7 @@ jobs:
           pip install ansible-core>=2.14
 
       - name: Download build artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ansible-collection
           path: build/
@@ -187,7 +200,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download build artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ansible-collection
           path: build/

@@ -11,4 +11,5 @@ version_assessment_ed25_support_status: unknown
 version_assessment_ed25_support_end_date: ""
 
 # Output directory on control node
-version_assessment_ed_25_03_output_dir: "{{ (playbook_dir | default('.')) + '/artifacts/' + inventory_hostname }}"
+version_assessment_ed_25_03_output_dir: >
+  {{ (playbook_dir | default('.')) + '/artifacts/' + inventory_hostname }}
