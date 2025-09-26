@@ -1,0 +1,5 @@
+# System dependencies for the execution environment
+# These packages will be installed via the system package manager
+git [platform:rpm platform:dpkg]
+openssh-clients [platform:rpm]
+openssh-client [platform:dpkg]

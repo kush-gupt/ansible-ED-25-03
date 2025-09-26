@@ -50,10 +50,16 @@ The GitHub Actions workflow is triggered by:
 - Publishes to Ansible Galaxy using the API key
 - Verifies successful publication
 
-### 4. create-release
+### 4. trigger-execution-environment
+- Only runs on main branch pushes
+- Triggers the execution environment build workflow
+- Builds and pushes the Ansible execution environment to GHCR
+
+### 5. create-release
 - Only runs for version tags (e.g., v0.1.0)
 - Creates a GitHub release with the collection tarball
 - Auto-generates release notes
+- Also triggers execution environment build for the release
 
 ## Version Management
 
@@ -96,6 +102,35 @@ collections:
 - Verify the repository has "Contents: write" permissions
 - Check that the tag follows the expected format (v*)
 
+## Execution Environment
+
+The repository also builds an Ansible execution environment (EE) that includes all the necessary dependencies to run the CISA ED 25-03 collection. The execution environment is automatically built and pushed to GitHub Container Registry (GHCR) when changes are made to the main branch.
+
+### Execution Environment Workflow
+
+The `build-execution-environment.yml` workflow:
+- Builds an Ansible execution environment using `ansible-builder`
+- Includes all collection dependencies (cisco.asa, ansible.netcommon)
+- Runs security scanning with Trivy
+- Pushes the image to GHCR at `ghcr.io/[owner]/[repo]/ansible-ee`
+- Generates build provenance attestations
+
+### Using the Execution Environment
+
+You can use the execution environment with various tools:
+
+```bash
+# Pull the latest execution environment
+podman pull ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:latest
+
+# Run a playbook using the execution environment
+podman run --rm -v $(pwd):/runner ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:latest \
+  ansible-playbook -i inventory.ini playbook.yml
+
+# Use with ansible-navigator (recommended)
+ansible-navigator run playbook.yml \
+  --execution-environment-image ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:latest
+```
 ## Local Testing
 
 Before pushing, you can test the collection build locally:
@@ -109,4 +144,20 @@ ansible-galaxy collection build
 
 # Test installation
 ansible-galaxy collection install kush_gupt-ed_25_03-*.tar.gz --force
+```
+
+### Testing Execution Environment Locally
+
+You can also test the execution environment build locally:
+
+```bash
+# Install ansible-builder
+pip install ansible-builder
+
+# Build the execution environment
+ansible-builder build --file execution-environment.yml --tag local-ee:latest
+
+# Test the execution environment
+podman run --rm local-ee:latest ansible --version
+podman run --rm local-ee:latest ansible-galaxy collection list
 ```
