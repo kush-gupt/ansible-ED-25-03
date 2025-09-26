@@ -1,0 +1,21 @@
+namespace: some-namespace
+name: ed_25_03
+version: 0.1.0
+readme: README.md
+repository: https://github.com/kush-gupt/ansible-ED-25-03
+authors:
+  - "ED-25-03 Automation Maintainers"
+description: "Automations for CISA Supplemental Direction ED 25-03 Core Dump & Hunt (Cisco ASA)"
+license:
+  - something-open
+tags:
+  - cisa
+  - asa
+  - cisco
+  - security
+  - incident-response
+  - forensics
+dependencies:
+  ansible.netcommon: ">=6.0.0"
+  cisco.asa: ">=5.0.0"
+

@@ -1,3 +1,93 @@
+# Ansible Collection for CISA ED 25-03 (Cisco ASA)
+
+This repository contains Ansible content that automates key steps from CISA's Supplemental Direction ED 25-03 for Cisco ASA devices, helping organizations respond to CVE-2025-20333 and CVE-2025-20362 and potential compromise indicators.
+
+## CISA ED 25-03 Critical Deadlines
+
+- **September 26, 2025 11:59PM EDT**: 
+  - Submit core dumps for all public-facing ASA hardware (Parts 1-3)
+  - Apply latest Cisco updates for devices remaining in service
+- **September 30, 2025**: 
+  - Permanently disconnect ASA devices with end-of-support dates on/before this date
+- **October 2, 2025 11:59PM EDT**: 
+  - Report complete inventory and actions taken to CISA
+- **Ongoing**: Apply updates within 48 hours of Cisco release
+
+**References**:
+- [CISA ED 25-03 Directive](https://www.cisa.gov/news-events/directives/ed-25-03-identify-and-mitigate-potential-compromise-cisco-devices)
+- [CISA ED 25-03: Core Dump & Hunt Instructions](https://www.cisa.gov/news-events/directives/supplemental-direction-ed-25-03-core-dump-and-hunt-instructions)
+- [CVE-2025-20333](https://www.cve.org/CVERecord?id=CVE-2025-20333)
+
+## Quick Start
+
+### 1. Prerequisites
+```bash
+# Install required collections
+ansible-galaxy collection install -r ansible/requirements.yml
+
+# Verify Ansible version (requires 2.14+)
+ansible --version
+```
+
+### 2. Configuration
+```bash
+# Configure your ASA devices
+cp ansible/inventory.ini.example ansible/inventory.ini
+# Edit ansible/inventory.ini with your ASA hosts and credentials
+
+# Configure device-specific settings
+cp ansible/group_vars/asa.yml.example ansible/group_vars/asa.yml  
+# Edit ansible/group_vars/asa.yml for your environment
+```
+
+### 3. Execution Workflow
+
+#### Step 1: Assessment and Artifact Collection
+```bash
+# Safe initial assessment - no device impact
+ansible-playbook -i ansible/inventory.ini \
+  ansible/ansible_collections/playbooks/collect_artifacts.yml
+```
+
+#### Step 2: Patch Verification
+```bash
+# Check for firmware update logs
+ansible-playbook -i ansible/inventory.ini \
+  ansible/ansible_collections/playbooks/patch_checks.yml
+```
+
+#### Step 3: Syslog Analysis (Local)
+```bash
+# Analyze exported syslog files on control node
+ansible-playbook -i ansible/inventory.ini \
+  ansible/ansible_collections/playbooks/hunt_syslog_checks.yml \
+  -e asa_syslog_glob="/path/to/your/asa/logs/*.log"
+```
+
+#### Step 4: Core Dump (⚠️ DANGEROUS - CAUSES OUTAGE)
+```bash
+# Only execute if compromise is suspected and you understand the risks
+ansible-playbook -i ansible/inventory.ini \
+  ansible/ansible_collections/playbooks/core_dump.yml \
+  -e ed_25_03_perform_core_dump=true \
+  -e ed_25_03_confirm_manual_power_cycle=true \
+  -e ed_25_03_core_dump_ack_text="I acknowledge this triggers immediate reload and potential outage per CISA ED 25-03 guidance."
+```
+
+#### Step 5: Comprehensive Report
+```bash
+# Generate consolidated assessment report
+ansible-playbook -i ansible/inventory.ini \
+  ansible/ansible_collections/playbooks/assess_and_report.yml
+```
+
+### Step 6. Review Results
+All outputs are saved to: `artifacts/<inventory_hostname>/`
+- Review `ed25_report.json` for consolidated findings and recommendations
+- **If compromise detected**: Immediately disconnect device (do not power off), report to CISA at contact@cisa.dhs.gov
+- **Submit core dumps**: Upload to CISA Malware Next Gen portal if public-facing ASA hardware
+- **Complete inventory reporting**: Submit to CISA by October 2, 2025 using provided template
+
 # Disclaimer
 
 ## Disclaimer of Warranty and Liability

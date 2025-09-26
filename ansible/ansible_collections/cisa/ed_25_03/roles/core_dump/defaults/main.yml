@@ -1,0 +1,15 @@
+---
+# Strong gating to avoid accidental device reload/outage
+core_dump_ed_25_03_perform_core_dump: false
+core_dump_ed_25_03_confirm_manual_power_cycle: false
+core_dump_ed_25_03_core_dump_ack_text: ""
+
+# Filesystem typically disk0:
+core_dump_ed_25_03_filesystem: "disk0:"
+
+# Optional attempt to reconnect after reload (best effort)
+core_dump_ed_25_03_attempt_reconnect: false
+core_dump_ed_25_03_expected_reload_seconds: 180
+
+# Output directory on control node for notes
+core_dump_ed_25_03_output_dir: "{{ (playbook_dir | default('.') ) + '/artifacts/' + inventory_hostname }}"

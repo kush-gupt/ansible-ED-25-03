@@ -1,0 +1,10 @@
+---
+galaxy_info:
+  author: CISA ED-25-03 Maintainers
+  description: Assess ASA version and known vulnerability context
+  license: Apache-2.0
+  min_ansible_version: 2.14.0
+dependencies: []
+collections:
+  - cisco.asa
+  - ansible.netcommon
