@@ -14,8 +14,20 @@ additional_build_steps:
   prepend_base:
     - RUN whoami
     - RUN cat /etc/os-release
-  prepend_galaxy:
-    - COPY ansible.cfg /etc/ansible/
   prepend_final:
     - RUN ls -la /usr/share/ansible/collections/
     - RUN ansible-galaxy collection list
+    - |
+      RUN cat > /etc/ansible/ansible.cfg << 'EOF'
+      [defaults]
+      host_key_checking = False
+      stdout_callback = yaml
+      timeout = 30
+      gathering = explicit
+      
+      [inventory]
+      enable_plugins = host_list, script, auto, yaml, ini, toml
+      
+      [ssh_connection]
+      ssh_args = -o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      EOF

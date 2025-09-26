@@ -10,7 +10,6 @@ on:
       - 'requirements.yml'
       - 'requirements.txt'
       - 'bindep.txt'
-      - 'ansible.cfg'
       - '.github/workflows/build-execution-environment.yml'
   pull_request:
     branches:
@@ -20,7 +19,6 @@ on:
       - 'requirements.yml'
       - 'requirements.txt'
       - 'bindep.txt'
-      - 'ansible.cfg'
       - '.github/workflows/build-execution-environment.yml'
   workflow_dispatch:
     inputs:
@@ -65,27 +63,9 @@ jobs:
           # Copy the ansible requirements to root for EE build
           cp ansible/requirements.yml ./
           
-          # Ensure ansible.cfg is in the root for the build context
-          if [ ! -f ansible.cfg ]; then
-            if [ -f _build/configs/ansible.cfg ]; then
-              cp _build/configs/ansible.cfg ./ansible.cfg
-            else
-              # Create a minimal ansible.cfg if it doesn't exist
-              cat > ansible.cfg << EOF
-          [defaults]
-          host_key_checking = False
-          stdout_callback = yaml
-          timeout = 30
-          gathering = explicit
-          
-          [inventory]
-          enable_plugins = host_list, script, auto, yaml, ini, toml
-          
-          [ssh_connection]
-          ssh_args = -o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
-          EOF
-            fi
-          fi
+          # Verify all required files exist
+          echo "=== Checking build files ==="
+          ls -la
           
           # Show what we're building with
           echo "=== Execution Environment Configuration ==="
@@ -99,9 +79,6 @@ jobs:
           echo
           echo "=== System Dependencies ==="
           cat bindep.txt
-          echo
-          echo "=== Ansible Configuration ==="
-          cat ansible.cfg
 
       - name: Log in to Container Registry
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/playbook-nest') || (github.event_name == 'workflow_dispatch' && inputs.push_to_registry)
@@ -213,28 +190,6 @@ jobs:
         run: |
           # Copy the ansible requirements to root for EE build
           cp ansible/requirements.yml ./
-          
-          # Ensure ansible.cfg is in the root for the build context
-          if [ ! -f ansible.cfg ]; then
-            if [ -f _build/configs/ansible.cfg ]; then
-              cp _build/configs/ansible.cfg ./ansible.cfg
-            else
-              # Create a minimal ansible.cfg if it doesn't exist
-              cat > ansible.cfg << EOF
-          [defaults]
-          host_key_checking = False
-          stdout_callback = yaml
-          timeout = 30
-          gathering = explicit
-          
-          [inventory]
-          enable_plugins = host_list, script, auto, yaml, ini, toml
-          
-          [ssh_connection]
-          ssh_args = -o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
-          EOF
-            fi
-          fi
 
       - name: Build execution environment for scanning
         run: |

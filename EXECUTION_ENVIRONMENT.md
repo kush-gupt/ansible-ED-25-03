@@ -134,11 +134,10 @@ The execution environment build includes:
 
 The execution environment is defined by these files:
 
-- `execution-environment.yml` - Main EE definition
+- `execution-environment.yml` - Main EE definition with embedded ansible.cfg
 - `requirements.yml` - Ansible collection dependencies
 - `requirements.txt` - Python package dependencies
 - `bindep.txt` - System package dependencies
-- `ansible.cfg` - Ansible configuration (copied from `_build/configs/` during build)
 
 ## Support
 
