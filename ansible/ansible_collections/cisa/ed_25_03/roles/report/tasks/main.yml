@@ -40,14 +40,21 @@
 
 - name: "Add ED 25-03 recommended next actions (advisory)"
   ansible.builtin.set_fact:
-    report_ed25_report: "{{ report_ed25_report | combine({'recommendations': _recs}) }}"
+    report_ed25_report: >
+      {{ report_ed25_report | combine({'recommendations': _recs}) }}
   vars:
     _compromised: >
       {{ report_ed25_report.artifacts.implant_detected | default(false) }}
     _is_public: >
-      {{ report_ed25_report.version_assessment.is_public_facing | default(false) }}
+      {{
+        report_ed25_report.version_assessment.is_public_facing |
+        default(false)
+      }}
     _support: >
-      {{ report_ed25_report.version_assessment.support_status | default('unknown') }}
+      {{
+        report_ed25_report.version_assessment.support_status |
+        default('unknown')
+      }}
     _recs: |
       {% set recs = [] %}
       {% if _compromised %}

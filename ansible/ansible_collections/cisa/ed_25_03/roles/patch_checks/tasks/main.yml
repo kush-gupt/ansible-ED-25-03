@@ -13,7 +13,10 @@
 - name: Set flag for firmwareupdate.log existence
   ansible.builtin.set_fact:
     patch_checks_ed25_firmwareupdate_present: >
-      {{ (patch_checks_dir_out.stdout[0] | default('')) is search('firmwareupdate\\.log') }}
+      {{
+        (patch_checks_dir_out.stdout[0] | default('')) is
+        search('firmwareupdate\\.log')
+      }}
 
 - name: Get firmwareupdate.log content when present
   when: patch_checks_ed25_firmwareupdate_present | bool

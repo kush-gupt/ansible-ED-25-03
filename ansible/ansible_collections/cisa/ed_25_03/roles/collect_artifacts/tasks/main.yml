@@ -74,14 +74,20 @@
 
 - name: Evaluate increase in runs
   ansible.builtin.set_fact:
-    collect_artifacts_ed25_checkheaps_increased: "{{ collect_artifacts_ed25_runs_2 > collect_artifacts_ed25_runs_1 }}"
+    collect_artifacts_ed25_checkheaps_increased: >
+      {{ collect_artifacts_ed25_runs_2 > collect_artifacts_ed25_runs_1 }}
 
 - name: Save checkheaps summary JSON
   ansible.builtin.copy:
     dest: "{{ collect_artifacts_ed_25_03_output_dir }}/checkheaps_summary.json"
     content: >
-      {{ {'runs_pre': collect_artifacts_ed25_runs_1, 'runs_post': collect_artifacts_ed25_runs_2,
-          'increased': collect_artifacts_ed25_checkheaps_increased} | to_nice_json }}
+      {{
+        {
+          'runs_pre': collect_artifacts_ed25_runs_1,
+          'runs_post': collect_artifacts_ed25_runs_2,
+          'increased': collect_artifacts_ed25_checkheaps_increased
+        } | to_nice_json
+      }}
     mode: "0644"
   delegate_to: localhost
 
@@ -118,7 +124,9 @@
 - name: Set compromised flag if any implant output is present
   ansible.builtin.set_fact:
     collect_artifacts_ed25_compromised: >
-      {{ (collect_artifacts_implant_check.stdout[0] | default('') | trim) != '' }}
+      {{
+        (collect_artifacts_implant_check.stdout[0] | default('') | trim) != ''
+      }}
 
 - name: Save artifact summary JSON
   ansible.builtin.copy:

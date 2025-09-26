@@ -48,7 +48,10 @@
 - name: Aggregate counts
   ansible.builtin.set_fact:
     hunt_syslog_checks_ed25_syslog_counts: >
-      {{ hunt_syslog_checks_ed25_syslog_counts | combine(_agg, recursive=True) }}
+      {{
+        hunt_syslog_checks_ed25_syslog_counts |
+        combine(_agg, recursive=True)
+      }}
   vars:
     _agg: |
       {% set acc = hunt_syslog_checks_ed25_syslog_counts.copy() %}

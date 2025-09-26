@@ -16,12 +16,15 @@
 
 - name: Extract ASA version string
   ansible.builtin.set_fact:
-    version_assessment_asa_version_text: "{{ (show_version.stdout[0] | default('')) }}"
+    version_assessment_asa_version_text: >
+      {{ (show_version.stdout[0] | default('')) }}
 
 - name: Parse version components (best-effort)
   vars:
     m: >
-      {{ version_assessment_asa_version_text | regex_search('Cisco Adaptive Security Appliance
+      {{
+        version_assessment_asa_version_text |
+        regex_search('Cisco Adaptive Security Appliance
       Software Version\\s+([0-9]+\\.[0-9]+\\.[0-9]+(?:\\.[0-9]+)?)', '\\1') }}
   ansible.builtin.set_fact:
     version_assessment_asa_version_parsed: "{{ m | default('') }}"
@@ -36,7 +39,8 @@
       {%- elif 'ASA-SM' in version_assessment_asa_version_text or
                'Service Module' in version_assessment_asa_version_text -%}
       asa-sm
-      {%- elif 'Adaptive Security Appliance' in version_assessment_asa_version_text -%}
+      {%- elif 'Adaptive Security Appliance' in
+               version_assessment_asa_version_text -%}
       asa
       {%- else -%}
       unknown
@@ -72,8 +76,10 @@
       support_end_date: "{{ version_assessment_ed25_support_end_date }}"
       asa_version_text: "{{ version_assessment_asa_version_text }}"
       asa_version: "{{ version_assessment_asa_version_parsed }}"
-      cve_2025_20333_vulnerable: "{{ version_assessment_ed25_vuln_cve_2025_20333 }}"
-      cve_2025_20362_vulnerable: "{{ version_assessment_ed25_vuln_cve_2025_20362 }}"
+      cve_2025_20333_vulnerable: >
+        {{ version_assessment_ed25_vuln_cve_2025_20333 }}
+      cve_2025_20362_vulnerable: >
+        {{ version_assessment_ed25_vuln_cve_2025_20362 }}
       handler_removed_safe: "{{ version_assessment_ed25_handler_removed_safe }}"
 
 - name: Save version assessment JSON
