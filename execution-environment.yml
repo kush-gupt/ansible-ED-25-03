@@ -29,19 +29,20 @@ additional_build_steps:
     - RUN ansible-galaxy --version
     - RUN ansible-runner --version
   append_final:
-    # Create ansible configuration
-    - |
-      RUN mkdir -p /etc/ansible && cat > /etc/ansible/ansible.cfg << 'EOF'
-      [defaults]
-      host_key_checking = False
-      stdout_callback = yaml
-      timeout = 30
-      gathering = explicit
-      collections_path = /usr/share/ansible/collections
-      
-      [inventory]
-      enable_plugins = host_list, script, auto, yaml, ini, toml
-      
-      [ssh_connection]
-      ssh_args = -o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
-      EOF
+    # Create ansible configuration directory
+    - RUN mkdir -p /etc/ansible
+    # Create ansible configuration file
+    - RUN echo '[defaults]' > /etc/ansible/ansible.cfg
+    - RUN echo 'host_key_checking = False' >> /etc/ansible/ansible.cfg
+    - RUN echo 'stdout_callback = yaml' >> /etc/ansible/ansible.cfg
+    - RUN echo 'timeout = 30' >> /etc/ansible/ansible.cfg
+    - RUN echo 'gathering = explicit' >> /etc/ansible/ansible.cfg
+    - RUN echo 'collections_path = /usr/share/ansible/collections' >> /etc/ansible/ansible.cfg
+    - RUN echo '' >> /etc/ansible/ansible.cfg
+    - RUN echo '[inventory]' >> /etc/ansible/ansible.cfg
+    - RUN echo 'enable_plugins = host_list, script, auto, yaml, ini, toml' >> /etc/ansible/ansible.cfg
+    - RUN echo '' >> /etc/ansible/ansible.cfg
+    - RUN echo '[ssh_connection]' >> /etc/ansible/ansible.cfg
+    - RUN echo 'ssh_args = -o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' >> /etc/ansible/ansible.cfg
+    # Verify ansible configuration
+    - RUN cat /etc/ansible/ansible.cfg
