@@ -93,7 +93,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
           labels: |
             org.opencontainers.image.title=CISA ED 25-03 Ansible Execution Environment
@@ -117,8 +117,13 @@ jobs:
           # Tag with all metadata tags
           TAGS="${{ steps.meta.outputs.tags }}"
           for tag in $TAGS; do
-            echo "Tagging with: $tag"
-            podman tag temp-ee:latest "$tag"
+            # Validate tag format (must not start with hyphen or contain invalid characters)
+            if [[ "$tag" =~ ^[a-zA-Z0-9][a-zA-Z0-9._/-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
+              echo "Tagging with: $tag"
+              podman tag temp-ee:latest "$tag"
+            else
+              echo "Skipping invalid tag format: $tag"
+            fi
           done
           
           # Set output for digest (will be available after push)
@@ -149,8 +154,13 @@ jobs:
           echo "=== Pushing to Container Registry ==="
           TAGS="${{ steps.meta.outputs.tags }}"
           for tag in $TAGS; do
-            echo "Pushing: $tag"
-            podman push "$tag"
+            # Validate tag format before pushing
+            if [[ "$tag" =~ ^[a-zA-Z0-9][a-zA-Z0-9._/-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
+              echo "Pushing: $tag"
+              podman push "$tag"
+            else
+              echo "Skipping push of invalid tag format: $tag"
+            fi
           done
 
       - name: Generate artifact attestation
