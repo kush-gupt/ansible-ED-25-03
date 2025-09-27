@@ -18,7 +18,7 @@ This ensures consistent execution across different environments and simplifies d
 The execution environment is automatically built and published to GitHub Container Registry (GHCR):
 
 ```
-ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:latest
+ghcr.io/<owner>/<repo>/ansible-ee:latest
 ```
 
 ## Included Components
@@ -134,7 +134,7 @@ The execution environment build includes:
 - **Security Scanning**: Trivy vulnerability scanning
 - **Build Provenance**: SLSA build provenance attestations
 - **Minimal Base**: Uses official Ansible base images
-- **Dependency Pinning**: Specific version requirements where appropriate
+- **Dependency Versions**: Specifies minimum versions for dependencies
 
 ## Configuration Files
 

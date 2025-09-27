@@ -121,15 +121,14 @@ You can use the execution environment with various tools:
 
 ```bash
 # Pull the latest execution environment
-podman pull ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:latest
-
-# Run a playbook using the execution environment
-podman run --rm -v $(pwd):/runner ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:latest \
-  ansible-playbook -i inventory.ini playbook.yml
+podman pull ghcr.io/[owner]/[repo]/ansible-ee:latest
 
 # Use with ansible-navigator (recommended)
 ansible-navigator run playbook.yml \
-  --execution-environment-image ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:latest
+  --execution-environment-image ghcr.io/[owner]/[repo]/ansible-ee:latest
+
+# Run a playbook using the execution environment directly
+podman run --rm -v $(pwd):/runner ghcr.io/[owner]/[repo]/ansible-ee:latest ansible-playbook -i inventory.ini playbook.yml
 ```
 ## Local Testing
 
