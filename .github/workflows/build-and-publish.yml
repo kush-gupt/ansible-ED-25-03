@@ -18,6 +18,8 @@ env:
 jobs:
   lint-and-test:
     name: Lint and Test Collection
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
