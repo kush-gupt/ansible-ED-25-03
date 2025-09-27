@@ -206,9 +206,9 @@ jobs:
             --verbosity 1
 
       - name: Setup Trivy
-        uses: aquasecurity/setup-trivy@v0.2.0
+        uses: aquasecurity/setup-trivy@v0.2.4
         with:
-          version: 'v0.65.0'
+          version: 'v0.66.0'
 
       - name: Run Trivy vulnerability scanner with podman
         run: |
