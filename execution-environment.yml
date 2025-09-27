@@ -3,7 +3,7 @@ version: 3
 
 images:
   base_image:
-    name: quay.io/ubi9/ubi:latest
+    name: registry.access.redhat.com/ubi9/ubi:9.6
 
 dependencies:
   # Install ansible-core first, before galaxy collections
