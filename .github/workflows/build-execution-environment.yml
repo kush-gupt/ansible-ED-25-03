@@ -174,13 +174,31 @@ jobs:
           mkdir -p /tmp/.docker
           
           # Extract podman credentials and create docker config
-          REGISTRY_AUTH=$(echo -n "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" | base64 -w 0)
+          USERNAME="${{ github.actor }}"
+          TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          REGISTRY_AUTH=$(printf "%s:%s" "$USERNAME" "$TOKEN" | base64 -w 0)
+          # Provide credentials under multiple keys some tooling expects
           cat > /tmp/.docker/config.json << EOF
           {
             "auths": {
-              "${{ env.REGISTRY }}": {
-                "auth": "$REGISTRY_AUTH"
+              "ghcr.io": {
+                "auth": "$REGISTRY_AUTH",
+                "username": "$USERNAME",
+                "password": "$TOKEN"
+              },
+              "https://ghcr.io": {
+                "auth": "$REGISTRY_AUTH",
+                "username": "$USERNAME",
+                "password": "$TOKEN"
+              },
+              "https://ghcr.io/v1/": {
+                "auth": "$REGISTRY_AUTH",
+                "username": "$USERNAME",
+                "password": "$TOKEN"
               }
+            },
+            "HttpHeaders": {
+              "User-Agent": "github-actions-attest"
             }
           }
           EOF
@@ -194,7 +212,8 @@ jobs:
         env:
           DOCKER_CONFIG: /tmp/.docker
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Use repo from docker/metadata-action (guaranteed lowercase and host-correct)
+          subject-name: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
