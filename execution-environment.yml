@@ -33,7 +33,6 @@ additional_build_steps:
     - RUN mkdir -p /etc/ansible
     # Create ansible configuration file
     - RUN echo '[defaults]' > /etc/ansible/ansible.cfg
-    - RUN echo 'host_key_checking = False' >> /etc/ansible/ansible.cfg
     - RUN echo 'stdout_callback = yaml' >> /etc/ansible/ansible.cfg
     - RUN echo 'timeout = 30' >> /etc/ansible/ansible.cfg
     - RUN echo 'gathering = explicit' >> /etc/ansible/ansible.cfg
@@ -43,6 +42,6 @@ additional_build_steps:
     - RUN echo 'enable_plugins = host_list, script, auto, yaml, ini, toml' >> /etc/ansible/ansible.cfg
     - RUN echo '' >> /etc/ansible/ansible.cfg
     - RUN echo '[ssh_connection]' >> /etc/ansible/ansible.cfg
-    - RUN echo 'ssh_args = -o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' >> /etc/ansible/ansible.cfg
+    - RUN echo 'ssh_args = -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null' >> /etc/ansible/ansible.cfg
     # Verify ansible configuration
     - RUN cat /etc/ansible/ansible.cfg
