@@ -3,27 +3,37 @@ version: 3
 
 images:
   base_image:
-    name: quay.io/ansible/creator-base:latest
+    name: quay.io/ubi9/ubi:latest
 
 dependencies:
-  galaxy: requirements.yml
+  # Install ansible-core first, before galaxy collections
+  ansible_core:
+    package_pip: ansible-core>=2.15.0
+  # Python dependencies
   python: requirements.txt
+  # System packages
   system: bindep.txt
+  # Galaxy collections (installed after ansible-core)
+  galaxy: requirements.yml
 
 additional_build_steps:
   prepend_base:
-    - RUN whoami
-    - RUN cat /etc/os-release
-  prepend_final:
-    - RUN ls -la /usr/share/ansible/collections/
-    - RUN ansible-galaxy collection list
+    # Install essential packages and Python
+    - RUN dnf update -y && dnf install -y python3 python3-pip git openssh-clients && dnf clean all
+  prepend_galaxy:
+    # Verify ansible-core installation before galaxy operations
+    - RUN ansible --version
+    - RUN ansible-galaxy --version
+  append_final:
+    # Create ansible configuration
     - |
-      RUN cat > /etc/ansible/ansible.cfg << 'EOF'
+      RUN mkdir -p /etc/ansible && cat > /etc/ansible/ansible.cfg << 'EOF'
       [defaults]
       host_key_checking = False
       stdout_callback = yaml
       timeout = 30
       gathering = explicit
+      collections_path = /usr/share/ansible/collections
       
       [inventory]
       enable_plugins = host_list, script, auto, yaml, ini, toml

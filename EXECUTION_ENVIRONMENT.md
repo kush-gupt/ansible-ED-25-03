@@ -24,7 +24,10 @@ ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:latest
 ## Included Components
 
 ### Base Image
-- `quay.io/ansible/creator-base:latest`
+- `quay.io/ubi9/ubi:latest` - Red Hat Universal Base Image 9
+
+### Ansible Core
+- `ansible-core` (>=2.15.0, <2.18.0) - Installed via pip with version constraints
 
 ### Ansible Collections
 - `cisco.asa` (>=5.0.0)
@@ -39,8 +42,10 @@ ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:latest
 - `cryptography` (>=3.0.0)
 
 ### System Packages
+- `python3` and `python3-pip`
 - `git`
 - `openssh-clients`/`openssh-client`
+- `gcc` and development headers for compiling Python packages
 
 ## Usage Examples
 
