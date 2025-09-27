@@ -26,8 +26,9 @@ ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:latest
 ### Base Image
 - `registry.access.redhat.com/ubi9/ubi:9.6` - Red Hat Universal Base Image 9
 
-### Ansible Core
-- `ansible-core` (>=2.15.0, <2.18.0) - Installed via pip with version constraints
+### Ansible Core & Runner
+- `ansible-core` (>=2.15.0) - Installed via pip
+- `ansible-runner` (>=2.3.0) - Required for execution environment functionality
 
 ### Ansible Collections
 - `cisco.asa` (>=5.0.0)

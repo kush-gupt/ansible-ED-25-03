@@ -9,6 +9,9 @@ dependencies:
   # Install ansible-core first, before galaxy collections
   ansible_core:
     package_pip: ansible-core>=2.15.0
+  # Install ansible-runner (required for execution environments)
+  ansible_runner:
+    package_pip: ansible-runner>=2.3.0
   # Python dependencies
   python: requirements.txt
   # System packages
@@ -21,9 +24,10 @@ additional_build_steps:
     # Install essential packages and Python
     - RUN dnf update -y && dnf install -y python3 python3-pip git openssh-clients && dnf clean all
   prepend_galaxy:
-    # Verify ansible-core installation before galaxy operations
+    # Verify ansible-core and ansible-runner installation before galaxy operations
     - RUN ansible --version
     - RUN ansible-galaxy --version
+    - RUN ansible-runner --version
   append_final:
     # Create ansible configuration
     - |
