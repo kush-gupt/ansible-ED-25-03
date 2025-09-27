@@ -212,8 +212,9 @@ jobs:
         env:
           DOCKER_CONFIG: /tmp/.docker
         with:
-          # Use repo from docker/metadata-action and strip tag (subject-name must not include tag when using digest)
-          subject-name: ${{ split(fromJSON(steps.meta.outputs.json).tags[0], ':')[0] }}
+          # Use repo from docker/metadata-action and strip tag using supported functions
+          # subject-name must NOT include a tag when a digest is provided
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
