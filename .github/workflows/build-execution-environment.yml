@@ -82,11 +82,8 @@ jobs:
 
       - name: Log in to Container Registry
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/playbook-nest') || (github.event_name == 'workflow_dispatch' && inputs.push_to_registry)
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
 
       - name: Extract metadata
         id: meta
@@ -113,38 +110,38 @@ jobs:
             --tag temp-ee:latest \
             --verbosity 2
           
-          # Get the image ID
-          IMAGE_ID=$(docker images temp-ee:latest --format "{{.ID}}")
+          # Get the image ID (using podman since ansible-builder uses podman)
+          IMAGE_ID=$(podman images temp-ee:latest --format "{{.ID}}")
           echo "Built image ID: $IMAGE_ID"
           
           # Tag with all metadata tags
           TAGS="${{ steps.meta.outputs.tags }}"
           for tag in $TAGS; do
             echo "Tagging with: $tag"
-            docker tag temp-ee:latest "$tag"
+            podman tag temp-ee:latest "$tag"
           done
           
           # Set output for digest (will be available after push)
-          echo "digest=sha256:$(docker inspect temp-ee:latest --format='{{.Id}}' | cut -d: -f2)" >> $GITHUB_OUTPUT
+          echo "digest=sha256:$(podman inspect temp-ee:latest --format='{{.Id}}' | cut -d: -f2)" >> $GITHUB_OUTPUT
 
       - name: Test execution environment
         run: |
           echo "=== Testing Execution Environment ==="
           
           # Test that ansible is available and working
-          docker run --rm temp-ee:latest ansible --version
+          podman run --rm temp-ee:latest ansible --version
           
           # Test that required collections are installed
           echo "=== Installed Collections ==="
-          docker run --rm temp-ee:latest ansible-galaxy collection list
+          podman run --rm temp-ee:latest ansible-galaxy collection list
           
           # Test that cisco.asa collection is available
           echo "=== Testing cisco.asa collection ==="
-          docker run --rm temp-ee:latest ansible-doc cisco.asa.asa_command || echo "cisco.asa.asa_command documentation not found, but collection may still be functional"
+          podman run --rm temp-ee:latest ansible-doc cisco.asa.asa_command || echo "cisco.asa.asa_command documentation not found, but collection may still be functional"
           
           # Test that ansible.netcommon collection is available
           echo "=== Testing ansible.netcommon collection ==="
-          docker run --rm temp-ee:latest ansible-doc ansible.netcommon.network_cli || echo "ansible.netcommon.network_cli documentation not found, but collection may still be functional"
+          podman run --rm temp-ee:latest ansible-doc ansible.netcommon.network_cli || echo "ansible.netcommon.network_cli documentation not found, but collection may still be functional"
 
       - name: Push to registry
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/playbook-nest') || (github.event_name == 'workflow_dispatch' && inputs.push_to_registry)
@@ -153,7 +150,7 @@ jobs:
           TAGS="${{ steps.meta.outputs.tags }}"
           for tag in $TAGS; do
             echo "Pushing: $tag"
-            docker push "$tag"
+            podman push "$tag"
           done
 
       - name: Generate artifact attestation
