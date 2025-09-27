@@ -212,8 +212,12 @@ jobs:
 
       - name: Run Trivy vulnerability scanner with podman
         run: |
-          # Run trivy with podman backend
-          trivy image --format sarif --output trivy-results.sarif --image-src podman scan-ee:latest
+          # Export image to tar file for scanning (podman socket not available in GitHub Actions)
+          echo "Exporting image to tar file for scanning..."
+          podman save scan-ee:latest -o scan-ee.tar
+          
+          # Scan the tar file with trivy
+          trivy image --format sarif --output trivy-results.sarif --input scan-ee.tar
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
