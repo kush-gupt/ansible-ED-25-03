@@ -5,6 +5,10 @@ FROM registry.access.redhat.com/ubi9/python-311:latest AS builder
 # Switch to root to install packages (ubi9/python-311 runs as non-root by default)
 USER 0
 
+# Update all packages to latest versions to get security patches
+# This addresses LOW/MEDIUM CVEs in system packages when fixes are available
+RUN dnf update -y --security && dnf clean all
+
 # Install build dependencies
 RUN dnf install -y \
     git-core \
