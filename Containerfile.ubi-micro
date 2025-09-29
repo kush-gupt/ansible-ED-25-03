@@ -2,6 +2,9 @@
 # Stage 1: Builder with full toolchain
 FROM registry.access.redhat.com/ubi9/python-311:latest AS builder
 
+# Switch to root to install packages (ubi9/python-311 runs as non-root by default)
+USER 0
+
 # Install build dependencies
 RUN dnf install -y \
     git-core \
