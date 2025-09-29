@@ -55,27 +55,9 @@ COPY --from=builder /usr/bin/ssh-keygen /usr/bin/ssh-keygen
 COPY --from=builder /usr/bin/ssh-keyscan /usr/bin/ssh-keyscan
 COPY --from=builder /usr/bin/scp /usr/bin/scp
 
-# Copy required shared libraries for git
-COPY --from=builder /usr/lib64/libcurl.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libnghttp2.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libidn2.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libssh.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libpsl.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libssl.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libcrypto.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libgssapi_krb5.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libkrb5.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libk5crypto.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libcom_err.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libkrb5support.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libz.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libbrotlidec.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libunistring.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libkeyutils.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libresolv.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libselinux.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libpcre2-8.so* /usr/lib64/
-COPY --from=builder /usr/lib64/libbrotlicommon.so* /usr/lib64/
+# Copy all shared libraries needed for git, ssh, and python
+# Using a broader approach to avoid missing dependencies
+COPY --from=builder /usr/lib64/*.so* /usr/lib64/
 
 # Copy essential CA certificates for HTTPS
 COPY --from=builder /etc/pki /etc/pki

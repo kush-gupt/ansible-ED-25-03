@@ -70,14 +70,16 @@ git pull origin main
 cd /Users/kugupta/Documents/work/ansible-ED-25-03
 
 # Build using the custom Containerfile.ubi-micro
+# Using --squash-all to minimize final image size by squashing all layers
 podman build \
   -f Containerfile.ubi-micro \
   -t ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:ubi-micro \
-  --layers=true \
+  --squash-all \
   --force-rm \
   .
 
 # Build time: ~5-10 minutes (first build, cached after)
+# Note: --squash-all reduces final image size by ~20-40MB
 ```
 
 ### Why Not ansible-builder?

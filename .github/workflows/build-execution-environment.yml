@@ -116,10 +116,11 @@ jobs:
           
           # Build using custom Containerfile.ubi-micro for multi-stage build
           # This provides smallest image size (~140-180MB) with minimal attack surface
+          # Using --squash-all to minimize final image size by squashing all layers
           podman build \
             -f Containerfile.ubi-micro \
             -t temp-ee:latest \
-            --layers=true \
+            --squash-all \
             --force-rm \
             .
           
