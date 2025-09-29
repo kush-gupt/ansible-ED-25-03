@@ -5,10 +5,11 @@ This execution environment uses **Red Hat UBI 9 Micro** for the smallest possibl
 ## Why UBI Micro?
 
 - ✅ **Smallest Red Hat image**: ~40MB base (vs ~220MB for ubi9-minimal, ~250MB for ubi9/python)
-- ✅ **No package manager**: Eliminates dnf/yum attack vectors (CVE-2021-35937, CVE-2021-35938, etc.)
+- ✅ **No package manager**: Eliminates dnf/yum/rpm attack vectors (CVE-2021-35937, CVE-2021-35938, etc.)
 - ✅ **Minimal components**: Only essential runtime libraries included
 - ✅ **Red Hat support**: Official Red Hat Universal Base Image
-- ✅ **Final image size**: ~140-180MB (vs ~400-600MB with standard UBI9)
+- ✅ **Final image size**: ~140-180MB (vs ~250-300MB UBI Minimal, ~400-600MB standard UBI9)
+- ✅ **Automated security testing**: CI/CD verifies no package managers or build tools present
 
 ## Security Benefits
 
@@ -57,32 +58,35 @@ This execution environment uses **Red Hat UBI 9 Micro** for the smallest possibl
 
 ### Prerequisites
 ```bash
-# Install ansible-builder
-pip install ansible-builder>=3.0.0
+# Podman is required (Docker can also work with minor adjustments)
+podman --version
 
-# Or use podman/docker directly
-podman --version  # or docker --version
+# Ensure you have the latest Containerfile.ubi-micro
+git pull origin main
 ```
 
-### Build the Image
+### Build the Image (Direct Podman Build)
 ```bash
 cd /Users/kugupta/Documents/work/ansible-ED-25-03
 
-# Build with ansible-builder
-ansible-builder build \
-  --tag ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:ubi-micro \
-  --container-runtime podman \
-  --verbosity 3
+# Build using the custom Containerfile.ubi-micro
+podman build \
+  -f Containerfile.ubi-micro \
+  -t ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:ubi-micro \
+  --layers=true \
+  --force-rm \
+  .
 
 # Build time: ~5-10 minutes (first build, cached after)
 ```
 
-### Alternative: Manual Build with Podman
-```bash
-# If ansible-builder has issues with multi-stage builds
-podman build -f execution-environment.yml \
-  -t ghcr.io/kush-gupt/ansible-ed-25-03/ansible-ee:ubi-micro .
-```
+### Why Not ansible-builder?
+
+ansible-builder doesn't support the multi-stage build pattern needed for UBI Micro. We use a custom `Containerfile.ubi-micro` that:
+1. Builds everything in a `ubi9/python-311` builder stage (with package manager)
+2. Copies only runtime files to `ubi9/ubi-micro` final stage (no package manager)
+
+This is the **recommended and only supported method** for building this execution environment.
 
 ## Testing the Image
 
@@ -239,5 +243,5 @@ For issues specific to:
 ---
 
 **Last Updated**: 2025-09-29  
-**UBI Micro Version**: 9.4  
+**UBI Micro Version**: 9.6+  
 **Ansible Core**: 2.17.x
