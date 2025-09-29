@@ -1,0 +1,99 @@
+# Multi-stage build for UBI Micro - Smallest Red Hat base with minimal attack surface
+# Stage 1: Builder with full toolchain
+FROM registry.access.redhat.com/ubi9/python-311:latest AS builder
+
+# Switch to root to install packages (ubi9/python-311 runs as non-root by default)
+USER 0
+
+# Install build dependencies
+RUN dnf install -y \
+    git-core \
+    openssh-clients \
+    gcc \
+    python3.11-devel \
+    libffi-devel \
+    openssl-devel \
+    && dnf clean all
+
+# Install Python packages to /opt/app-root
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3.11 install --no-cache-dir --prefix=/opt/app-root \
+    'ansible-core>=2.17.0,<2.18.0' \
+    'ansible-runner>=2.3.0,<2.4.0' \
+    -r /tmp/requirements.txt
+
+# Install Ansible collections from Galaxy (cisco.asa and ansible.netcommon)
+COPY requirements.yml /tmp/requirements.yml
+ENV ANSIBLE_COLLECTIONS_PATH=/opt/app-root/share/ansible/collections
+RUN ansible-galaxy collection install -r /tmp/requirements.yml
+
+# Copy the local collection (namespace is kush_gupt per galaxy.yml, but dir is cisa)
+# We need to copy it to the correct namespace path
+RUN mkdir -p /opt/app-root/share/ansible/collections/ansible_collections/kush_gupt
+COPY ansible/ansible_collections/cisa/ed_25_03 /opt/app-root/share/ansible/collections/ansible_collections/kush_gupt/ed_25_03
+
+# Stage 2: Minimal UBI Micro runtime (NO package manager, NO build tools)
+FROM registry.access.redhat.com/ubi9/ubi-micro:latest
+
+LABEL name="ansible-ee-ubi-micro" \
+      summary="Ansible Execution Environment based on UBI Micro" \
+      description="Minimal attack surface Ansible EE for CISA ED 25-03" \
+      maintainer="CISA ED 25-03 Project"
+
+# Copy Python 3.11 runtime from builder
+COPY --from=builder /usr/bin/python3.11 /usr/bin/python3.11
+COPY --from=builder /usr/lib64/python3.11 /usr/lib64/python3.11
+COPY --from=builder /usr/lib64/libpython3.11.so* /usr/lib64/
+
+# Copy all installed Python packages from builder
+COPY --from=builder /opt/app-root /opt/app-root
+
+# Copy essential runtime binaries (git for ansible-galaxy, ssh for network_cli)
+COPY --from=builder /usr/bin/git /usr/bin/git
+COPY --from=builder /usr/bin/ssh /usr/bin/ssh
+COPY --from=builder /usr/bin/ssh-keygen /usr/bin/ssh-keygen
+COPY --from=builder /usr/bin/ssh-keyscan /usr/bin/ssh-keyscan
+COPY --from=builder /usr/bin/scp /usr/bin/scp
+
+# Copy all shared libraries needed for git, ssh, and python
+# Using a broader approach to avoid missing dependencies
+COPY --from=builder /usr/lib64/*.so* /usr/lib64/
+
+# Copy essential CA certificates for HTTPS
+COPY --from=builder /etc/pki /etc/pki
+COPY --from=builder /etc/ssl /etc/ssl
+
+# Create symlinks for python
+RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
+    ln -sf /usr/bin/python3.11 /usr/bin/python
+
+# Set up environment
+ENV PATH=/opt/app-root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    PYTHONPATH=/opt/app-root/lib/python3.11/site-packages \
+    ANSIBLE_COLLECTIONS_PATH=/opt/app-root/share/ansible/collections \
+    ANSIBLE_CONFIG=/etc/ansible/ansible.cfg \
+    ANSIBLE_LOCAL_TEMP=/tmp/.ansible/tmp \
+    ANSIBLE_REMOTE_TEMP=/tmp/.ansible/tmp
+
+# Copy ansible configuration
+COPY ansible.cfg /etc/ansible/ansible.cfg
+
+# Create ansible user (non-root) and necessary directories
+RUN echo "ansible:x:1000:1000:Ansible User:/home/ansible:/bin/sh" >> /etc/passwd && \
+    echo "ansible:x:1000:" >> /etc/group && \
+    mkdir -p /home/ansible /runner /tmp/.ansible /etc/ansible && \
+    chown -R 1000:1000 /home/ansible /runner /tmp/.ansible
+
+# Set working directory
+WORKDIR /runner
+
+# Run as non-root user
+USER 1000
+
+# Verify installation
+RUN python3 --version && \
+    ansible --version && \
+    ansible-galaxy collection list
+
+# Default command
+CMD ["/bin/sh"]

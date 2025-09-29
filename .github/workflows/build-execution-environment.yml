@@ -6,6 +6,7 @@ on:
       - main
       - playbook-nest
     paths:
+      - 'Containerfile.ubi-micro'
       - 'execution-environment.yml'
       - 'ansible.cfg'
       - 'requirements.yml'
@@ -16,6 +17,7 @@ on:
     branches:
       - main
     paths:
+      - 'Containerfile.ubi-micro'
       - 'execution-environment.yml'
       - 'ansible.cfg'
       - 'requirements.yml'
@@ -52,40 +54,39 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install ansible-builder
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible-builder>=3.0.0
-
       - name: Prepare build context
         run: |
-          # Copy the ansible requirements to root for EE build
-          cp ansible/requirements.yml ./
+          # Copy the ansible requirements to root for Containerfile
+          cp ansible/requirements.yml ./requirements.yml
           
-          # Verify all required files exist
+          # Verify all required files exist for UBI Micro build
           echo "=== Checking build files ==="
           ls -la
           
-          # Show what we're building with
-          echo "=== Execution Environment Configuration ==="
-          cat execution-environment.yml
-          echo
+          echo "=== Verifying Containerfile.ubi-micro exists ==="
+          if [ ! -f "Containerfile.ubi-micro" ]; then
+            echo "ERROR: Containerfile.ubi-micro not found!"
+            exit 1
+          fi
+          cat Containerfile.ubi-micro
+          
+          echo ""
           echo "=== Ansible Configuration ==="
           cat ansible.cfg
-          echo
+          echo ""
           echo "=== Collection Requirements ==="
           cat requirements.yml
-          echo
+          echo ""
           echo "=== Python Requirements ==="
           cat requirements.txt
-          echo
-          echo "=== System Dependencies ==="
-          cat bindep.txt
+          
+      - name: Set up Podman
+        run: |
+          echo "=== Podman Version ==="
+          podman version
+          
+          echo "=== Podman Info ==="
+          podman info
 
       - name: Log in to Container Registry
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/playbook-nest') || (github.event_name == 'workflow_dispatch' && inputs.push_to_registry)
@@ -108,18 +109,28 @@ jobs:
             org.opencontainers.image.vendor=CISA ED 25-03 Project
             org.opencontainers.image.licenses=Apache-2.0
 
-      - name: Build execution environment
+      - name: Build execution environment with UBI Micro
         id: build
         run: |
-          # Build the execution environment
-          ansible-builder build \
-            --file execution-environment.yml \
-            --tag temp-ee:latest \
-            --verbosity 2
+          echo "=== Building with UBI Micro (smallest Red Hat base) ==="
           
-          # Get the image ID (using podman since ansible-builder uses podman)
+          # Build using custom Containerfile.ubi-micro for multi-stage build
+          # This provides smallest image size (~140-180MB) with minimal attack surface
+          # Using --squash-all to minimize final image size by squashing all layers
+          podman build \
+            -f Containerfile.ubi-micro \
+            -t temp-ee:latest \
+            --squash-all \
+            --force-rm \
+            .
+          
+          # Get the image ID
           IMAGE_ID=$(podman images temp-ee:latest --format "{{.ID}}")
           echo "Built image ID: $IMAGE_ID"
+          
+          # Show image size
+          echo "=== Image Size ==="
+          podman images temp-ee:latest --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
           
           # Tag with all metadata tags
           TAGS="${{ steps.meta.outputs.tags }}"
@@ -152,6 +163,45 @@ jobs:
           echo "=== Testing ansible.netcommon collection ==="
           echo "Listing available connection plugins from ansible.netcommon:"
           podman run --rm temp-ee:latest ansible-doc -t connection -l | grep netcommon || echo "Warning: No netcommon connection plugins listed"
+          
+          # SECURITY TEST: Verify NO package managers present (UBI Micro advantage)
+          echo "=== Security Verification: Package Managers ==="
+          echo "Verifying that package managers are NOT present (minimal attack surface)..."
+          if podman run --rm temp-ee:latest which dnf 2>/dev/null; then
+            echo "ERROR: dnf found in image (should not be present in UBI Micro)"
+            exit 1
+          fi
+          if podman run --rm temp-ee:latest which yum 2>/dev/null; then
+            echo "ERROR: yum found in image (should not be present in UBI Micro)"
+            exit 1
+          fi
+          if podman run --rm temp-ee:latest which microdnf 2>/dev/null; then
+            echo "ERROR: microdnf found in image (should not be present in UBI Micro)"
+            exit 1
+          fi
+          if podman run --rm temp-ee:latest which rpm 2>/dev/null; then
+            echo "ERROR: rpm found in image (should not be present in UBI Micro)"
+            exit 1
+          fi
+          echo "✓ PASSED: No package managers found - minimal attack surface confirmed"
+          
+          # SECURITY TEST: Verify NO build tools present
+          echo "=== Security Verification: Build Tools ==="
+          echo "Verifying that build tools are NOT present in runtime..."
+          if podman run --rm temp-ee:latest which gcc 2>/dev/null; then
+            echo "ERROR: gcc found in image (build tool should not be in runtime)"
+            exit 1
+          fi
+          echo "✓ PASSED: No build tools found - clean runtime image"
+          
+          # Verify running as non-root
+          echo "=== Security Verification: Non-Root User ==="
+          USER_ID=$(podman run --rm temp-ee:latest id -u)
+          if [ "$USER_ID" = "0" ]; then
+            echo "ERROR: Container running as root (should be UID 1000)"
+            exit 1
+          fi
+          echo "✓ PASSED: Running as UID $USER_ID (non-root)"
 
       - name: Push to registry
         id: push
@@ -235,27 +285,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install ansible-builder
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible-builder>=3.0.0
-
       - name: Prepare build context
         run: |
-          # Copy the ansible requirements to root for EE build
+          # Copy the ansible requirements to root for Containerfile
           cp ansible/requirements.yml ./
 
-      - name: Build execution environment for scanning
+      - name: Build execution environment for scanning (UBI Micro)
         run: |
-          ansible-builder build \
-            --file execution-environment.yml \
-            --tag scan-ee:latest \
-            --verbosity 1
+          echo "Building UBI Micro image for security scanning..."
+          podman build \
+            -f Containerfile.ubi-micro \
+            -t scan-ee:latest \
+            --squash-all \
+            --force-rm \
+            .
 
       - name: Setup Trivy
         uses: aquasecurity/setup-trivy@v0.2.4

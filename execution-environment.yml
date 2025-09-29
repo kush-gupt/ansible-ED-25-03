@@ -1,41 +1,25 @@
 ---
 version: 3
 
+build_arg_defaults:
+  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '-vvv'
+
 images:
   base_image:
-    name: registry.access.redhat.com/ubi9/python-311:latest
+    name: registry.access.redhat.com/ubi9/ubi-micro:latest
 
 additional_build_files:
   - src: ansible.cfg
     dest: configs/
+  - src: requirements.txt
+    dest: configs/
+  - src: requirements.yml
+    dest: configs/
+  - src: ansible/
+    dest: ansible/
 
+# NOTE: ansible-builder will ignore most of this when using custom Containerfile
+# The actual build logic is in Containerfile.ubi-micro
 dependencies:
-  # Install ansible-core first, before galaxy collections
-  ansible_core:
-    package_pip: ansible-core>=2.17.0
-  # Install ansible-runner (required for execution environments)
-  ansible_runner:
-    package_pip: ansible-runner>=2.3.0
-  # Python dependencies
   python: requirements.txt
-  # System packages
-  system: bindep.txt
-  # Galaxy collections (installed after ansible-core)
   galaxy: requirements.yml
-
-additional_build_steps:
-  prepend_base:
-    # Install Python 3.11 and essential packages
-    - RUN dnf update -y && dnf install -y python3.11 python3.11-pip git openssh-clients && dnf clean all
-    # Set Python 3.11 as the default python3
-    - RUN alternatives --set python3 /usr/bin/python3.11 || update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
-  prepend_galaxy:
-    # Verify ansible-core and ansible-runner installation before galaxy operations
-    - RUN ansible --version
-    - RUN ansible-galaxy --version
-    - RUN ansible-runner --version
-  append_final:
-    # Copy ansible configuration
-    - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
-    # Verify ansible configuration
-    - RUN cat /etc/ansible/ansible.cfg
