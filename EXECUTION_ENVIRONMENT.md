@@ -27,12 +27,12 @@ ghcr.io/<owner>/<repo>/ansible-ee:latest
 - `registry.access.redhat.com/ubi9/ubi:9.6` - Red Hat Universal Base Image 9
 
 ### Ansible Core & Runner
-- `ansible-core` (>=2.16.0)
+- `ansible-core` (>=2.15.0)
 - `ansible-runner` (>=2.3.0) - Required for execution environment functionality
 
 ### Ansible Collections
 - `cisco.asa` (>=5.0.0)
-- `ansible.netcommon` (>=6.0.0)
+- `ansible.netcommon` (>=5.3.0, <6.0.0) - Compatible with ansible-core 2.15.x
 
 ### Python Dependencies
 - `pyyaml` (>=6.0)

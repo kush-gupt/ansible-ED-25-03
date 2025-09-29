@@ -8,7 +8,7 @@ images:
 dependencies:
   # Install ansible-core first, before galaxy collections
   ansible_core:
-    package_pip: ansible-core>=2.16.0
+    package_pip: ansible-core>=2.15.0
   # Install ansible-runner (required for execution environments)
   ansible_runner:
     package_pip: ansible-runner>=2.3.0
