@@ -46,7 +46,7 @@ jobs:
       id-token: write
       attestations: write
     outputs:
-      image-digest: ${{ steps.build.outputs.digest }}
+      image-digest: ${{ steps.push.outputs.digest }}
       image-tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout repository
@@ -132,9 +132,6 @@ jobs:
               echo "Skipping invalid tag format: $tag"
             fi
           done
-          
-          # Set output for digest (will be available after push)
-          echo "digest=sha256:$(podman inspect temp-ee:latest --format='{{.Id}}' | cut -d: -f2)" >> $GITHUB_OUTPUT
 
       - name: Test execution environment
         run: |
@@ -157,19 +154,34 @@ jobs:
           podman run --rm temp-ee:latest ansible-doc -t connection -l | grep netcommon || echo "Warning: No netcommon connection plugins listed"
 
       - name: Push to registry
+        id: push
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/playbook-nest') || (github.event_name == 'workflow_dispatch' && inputs.push_to_registry)
         run: |
           echo "=== Pushing to Container Registry ==="
           TAGS="${{ steps.meta.outputs.tags }}"
+          MANIFEST_DIGEST=""
           for tag in $TAGS; do
             # Validate tag format before pushing
             if [[ "$tag" =~ ^[a-zA-Z0-9][a-zA-Z0-9._/-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
               echo "Pushing: $tag"
-              podman push "$tag"
+              PUSH_OUTPUT=$(podman push "$tag" --digestfile=/tmp/digest.txt)
+              # Capture the manifest digest from the first push (all tags point to same manifest)
+              if [ -z "$MANIFEST_DIGEST" ] && [ -f /tmp/digest.txt ]; then
+                MANIFEST_DIGEST=$(cat /tmp/digest.txt)
+                echo "Captured manifest digest: $MANIFEST_DIGEST"
+              fi
             else
               echo "Skipping push of invalid tag format: $tag"
             fi
           done
+          
+          # Set the manifest digest as output for attestation
+          if [ -n "$MANIFEST_DIGEST" ]; then
+            echo "digest=$MANIFEST_DIGEST" >> $GITHUB_OUTPUT
+            echo "Successfully captured manifest digest for attestation"
+          else
+            echo "Warning: Could not capture manifest digest"
+          fi
 
       - name: Setup Docker config for attestation
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/playbook-nest') || (github.event_name == 'workflow_dispatch' && inputs.push_to_registry)
@@ -208,7 +220,7 @@ jobs:
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ steps.build.outputs.digest }}
+          subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
   security-scan:
