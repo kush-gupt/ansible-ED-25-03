@@ -32,7 +32,7 @@ ghcr.io/<owner>/<repo>/ansible-ee:latest
 
 ### Ansible Collections
 - `cisco.asa` (>=5.0.0)
-- `ansible.netcommon` (>=5.3.0, <6.0.0) - Compatible with ansible-core 2.15.x
+- `ansible.netcommon` (5.3.0) - Pinned version compatible with ansible-core 2.15.x
 
 ### Python Dependencies
 - `pyyaml` (>=6.0)
