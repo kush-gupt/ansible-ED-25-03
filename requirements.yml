@@ -1,6 +1,6 @@
 ---
 collections:
   - name: cisco.asa
-    version: ">=5.0.0"
-  - name: ansible.netcommon
     version: ">=6.0.0"
+  - name: ansible.netcommon
+    version: ">=8.0.0"

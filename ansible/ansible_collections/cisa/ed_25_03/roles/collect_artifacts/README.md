@@ -116,7 +116,7 @@ artifacts/
 
 ## Prerequisites
 
-- Ansible 2.15+
+- Ansible 2.17+
 - Collections: `cisco.asa`, `ansible.netcommon`
 - SSH connectivity to Cisco ASA devices
 - Sufficient disk space on control node for output files

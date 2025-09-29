@@ -3,12 +3,16 @@ version: 3
 
 images:
   base_image:
-    name: registry.access.redhat.com/ubi9/ubi:9.6
+    name: registry.access.redhat.com/ubi9/python-311:latest
+
+additional_build_files:
+  - src: ansible.cfg
+    dest: configs/
 
 dependencies:
   # Install ansible-core first, before galaxy collections
   ansible_core:
-    package_pip: ansible-core>=2.15.0
+    package_pip: ansible-core>=2.17.0
   # Install ansible-runner (required for execution environments)
   ansible_runner:
     package_pip: ansible-runner>=2.3.0
@@ -21,27 +25,17 @@ dependencies:
 
 additional_build_steps:
   prepend_base:
-    # Install essential packages and Python
-    - RUN dnf update -y && dnf install -y python3 python3-pip git openssh-clients && dnf clean all
+    # Install Python 3.11 and essential packages
+    - RUN dnf update -y && dnf install -y python3.11 python3.11-pip git openssh-clients && dnf clean all
+    # Set Python 3.11 as the default python3
+    - RUN alternatives --set python3 /usr/bin/python3.11 || update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
   prepend_galaxy:
     # Verify ansible-core and ansible-runner installation before galaxy operations
     - RUN ansible --version
     - RUN ansible-galaxy --version
     - RUN ansible-runner --version
   append_final:
-    # Create ansible configuration directory
-    - RUN mkdir -p /etc/ansible
-    # Create ansible configuration file
-    - RUN echo '[defaults]' > /etc/ansible/ansible.cfg
-    - RUN echo 'stdout_callback = yaml' >> /etc/ansible/ansible.cfg
-    - RUN echo 'timeout = 30' >> /etc/ansible/ansible.cfg
-    - RUN echo 'gathering = explicit' >> /etc/ansible/ansible.cfg
-    - RUN echo 'collections_path = /usr/share/ansible/collections' >> /etc/ansible/ansible.cfg
-    - RUN echo '' >> /etc/ansible/ansible.cfg
-    - RUN echo '[inventory]' >> /etc/ansible/ansible.cfg
-    - RUN echo 'enable_plugins = host_list, script, auto, yaml, ini, toml' >> /etc/ansible/ansible.cfg
-    - RUN echo '' >> /etc/ansible/ansible.cfg
-    - RUN echo '[ssh_connection]' >> /etc/ansible/ansible.cfg
-    - RUN echo 'ssh_args = -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null' >> /etc/ansible/ansible.cfg
+    # Copy ansible configuration
+    - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
     # Verify ansible configuration
     - RUN cat /etc/ansible/ansible.cfg

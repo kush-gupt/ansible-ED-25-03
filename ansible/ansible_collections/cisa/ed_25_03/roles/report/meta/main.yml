@@ -3,6 +3,6 @@ galaxy_info:
   author: Kush Gupta
   description: Generate consolidated ED 25-03 assessment reports
   license: Apache-2.0
-  min_ansible_version: 2.15.0
+  min_ansible_version: 2.17.0
 dependencies: []
 collections: []
