@@ -21,8 +21,10 @@ dependencies:
 
 additional_build_steps:
   prepend_base:
-    # Install essential packages (Python 3.11 already included in base image)
-    - RUN dnf update -y && dnf install -y git openssh-clients && dnf clean all
+    # Install Python 3.11 and essential packages
+    - RUN dnf update -y && dnf install -y python3.11 python3.11-pip git openssh-clients && dnf clean all
+    # Set Python 3.11 as the default python3
+    - RUN alternatives --set python3 /usr/bin/python3.11 || update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
   prepend_galaxy:
     # Verify ansible-core and ansible-runner installation before galaxy operations
     - RUN ansible --version
