@@ -153,7 +153,8 @@ jobs:
           
           # Test that ansible.netcommon collection is available
           echo "=== Testing ansible.netcommon collection ==="
-          podman run --rm temp-ee:latest ansible-doc ansible.netcommon.network_cli || echo "ansible.netcommon.network_cli documentation not found, but collection may still be functional"
+          echo "Listing available connection plugins from ansible.netcommon:"
+          podman run --rm temp-ee:latest ansible-doc -t connection -l | grep netcommon || echo "Warning: No netcommon connection plugins listed"
 
       - name: Push to registry
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/playbook-nest') || (github.event_name == 'workflow_dispatch' && inputs.push_to_registry)
