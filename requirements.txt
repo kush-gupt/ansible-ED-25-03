@@ -3,7 +3,8 @@
 
 # SSH connectivity (required by cisco.asa via network_cli)
 paramiko>=3.4.0,<4.0.0
-cryptography>=41.0.0,<43.0.0
+# Updated to fix CVE: GHSA-h4gh-qq45-vh27 (MEDIUM)
+cryptography>=43.0.1,<44.0.0
 
 # Core Ansible dependencies (ansible-core brings these, but pinned for security)
 pyyaml>=6.0.1,<7.0.0

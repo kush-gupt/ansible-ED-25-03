@@ -15,6 +15,13 @@ RUN dnf install -y \
     openssl-devel \
     && dnf clean all
 
+# Upgrade pip and setuptools to fix CVEs before installing packages
+# CVE-2025-8869 (pip): Upgrade to 25.2+
+# CVE-2025-47273, CVE-2024-6345 (setuptools): Upgrade to 78.1.1+
+RUN pip3.11 install --no-cache-dir --upgrade \
+    'pip>=25.2' \
+    'setuptools>=78.1.1'
+
 # Install Python packages to /opt/app-root
 COPY requirements.txt /tmp/requirements.txt
 RUN pip3.11 install --no-cache-dir --prefix=/opt/app-root \
