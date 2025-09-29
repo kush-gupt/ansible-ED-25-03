@@ -204,7 +204,7 @@ artifacts/
 
 ## Prerequisites
 
-- Ansible 2.15+
+- Ansible 2.17+
 - ASA syslog files available on the control node
 - Sufficient disk space for analysis output
 - Python 3.6+ for JSON processing

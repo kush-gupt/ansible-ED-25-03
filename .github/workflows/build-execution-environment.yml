@@ -7,6 +7,7 @@ on:
       - playbook-nest
     paths:
       - 'execution-environment.yml'
+      - 'ansible.cfg'
       - 'requirements.yml'
       - 'requirements.txt'
       - 'bindep.txt'
@@ -16,6 +17,7 @@ on:
       - main
     paths:
       - 'execution-environment.yml'
+      - 'ansible.cfg'
       - 'requirements.yml'
       - 'requirements.txt'
       - 'bindep.txt'
@@ -72,6 +74,9 @@ jobs:
           # Show what we're building with
           echo "=== Execution Environment Configuration ==="
           cat execution-environment.yml
+          echo
+          echo "=== Ansible Configuration ==="
+          cat ansible.cfg
           echo
           echo "=== Collection Requirements ==="
           cat requirements.yml

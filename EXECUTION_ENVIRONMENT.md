@@ -24,15 +24,15 @@ ghcr.io/<owner>/<repo>/ansible-ee:latest
 ## Included Components
 
 ### Base Image
-- `registry.access.redhat.com/ubi9/ubi:9.6` - Red Hat Universal Base Image 9
+- `registry.access.redhat.com/ubi9/python-311:latest` - Red Hat UBI 9 with Python 3.11
 
 ### Ansible Core & Runner
-- `ansible-core` (>=2.15.0)
+- `ansible-core` (>=2.17.0) - Required for latest ansible.netcommon
 - `ansible-runner` (>=2.3.0) - Required for execution environment functionality
 
 ### Ansible Collections
-- `cisco.asa` (>=5.0.0)
-- `ansible.netcommon` (5.3.0) - Pinned version compatible with ansible-core 2.15.x
+- `cisco.asa` (>=6.0.0)
+- `ansible.netcommon` (>=8.0.0) - Compatible with ansible-core 2.17.x+
 
 ### Python Dependencies
 - `pyyaml` (>=6.0)
@@ -118,10 +118,11 @@ The execution environment is automatically built and pushed to GHCR when:
 
 1. Changes are pushed to the `main` or `playbook-nest` branch that affect:
    - `execution-environment.yml`
+   - `ansible.cfg`
    - `requirements.yml`
    - `requirements.txt`
    - `bindep.txt`
-   - `_build/**`
+   - `.github/workflows/build-execution-environment.yml`
 
 2. The workflow is manually triggered via `workflow_dispatch`
 
@@ -140,7 +141,8 @@ The execution environment build includes:
 
 The execution environment is defined by these files:
 
-- `execution-environment.yml` - Main EE definition with embedded ansible.cfg
+- `execution-environment.yml` - Main EE definition
+- `ansible.cfg` - Ansible configuration
 - `requirements.yml` - Ansible collection dependencies
 - `requirements.txt` - Python package dependencies
 - `bindep.txt` - System package dependencies

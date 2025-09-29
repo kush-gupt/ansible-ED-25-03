@@ -19,5 +19,5 @@ tags:
   - incident_response
   - forensics
 dependencies:
-  ansible.netcommon: ">=6.0.0"
-  cisco.asa: ">=5.0.0"
+  ansible.netcommon: ">=8.0.0"
+  cisco.asa: ">=6.0.0"

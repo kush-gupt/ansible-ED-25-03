@@ -143,7 +143,7 @@ artifacts/
 
 ## Prerequisites
 
-- Ansible 2.15+
+- Ansible 2.17+
 - Collections: `cisco.asa`, `ansible.netcommon`
 - **Maintenance Window**: Coordinate with stakeholders
 - **Manual Power Cycle Capability**: Physical access or remote power management
