@@ -3,14 +3,14 @@
 FROM registry.access.redhat.com/ubi9/python-311:latest AS builder
 
 # Install build dependencies
-RUN microdnf install -y \
+RUN dnf install -y \
     git-core \
     openssh-clients \
     gcc \
     python3.11-devel \
     libffi-devel \
     openssl-devel \
-    && microdnf clean all
+    && dnf clean all
 
 # Install Python packages to /opt/app-root
 COPY requirements.txt /tmp/requirements.txt
