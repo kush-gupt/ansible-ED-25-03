@@ -27,7 +27,7 @@ ghcr.io/<owner>/<repo>/ansible-ee:latest
 - `registry.access.redhat.com/ubi9/ubi:9.6` - Red Hat Universal Base Image 9
 
 ### Ansible Core & Runner
-- `ansible-core` (>=2.15.0) - Installed via pip
+- `ansible-core` (>=2.16.0)
 - `ansible-runner` (>=2.3.0) - Required for execution environment functionality
 
 ### Ansible Collections

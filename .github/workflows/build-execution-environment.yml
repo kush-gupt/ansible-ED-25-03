@@ -165,55 +165,42 @@ jobs:
             fi
           done
 
+      - name: Setup Docker config for attestation
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/playbook-nest') || (github.event_name == 'workflow_dispatch' && inputs.push_to_registry)
+        run: |
+          # Create docker config directory
+          mkdir -p ~/.docker
+          
+          # Copy podman auth to docker config location for attestation action
+          # Podman auth is stored in ~/.config/containers/auth.json or ${XDG_RUNTIME_DIR}/containers/auth.json
+          if [ -f "${XDG_RUNTIME_DIR}/containers/auth.json" ]; then
+            cp "${XDG_RUNTIME_DIR}/containers/auth.json" ~/.docker/config.json
+            echo "Copied podman auth from XDG_RUNTIME_DIR"
+          elif [ -f ~/.config/containers/auth.json ]; then
+            cp ~/.config/containers/auth.json ~/.docker/config.json
+            echo "Copied podman auth from ~/.config/containers/auth.json"
+          elif [ -f /run/containers/$(id -u)/auth.json ]; then
+            cp /run/containers/$(id -u)/auth.json ~/.docker/config.json
+            echo "Copied podman auth from /run/containers"
+          else
+            echo "Warning: Could not find podman auth file, checking /run/user"
+            if [ -f "/run/user/$(id -u)/containers/auth.json" ]; then
+              cp "/run/user/$(id -u)/containers/auth.json" ~/.docker/config.json
+              echo "Copied podman auth from /run/user"
+            else
+              echo "Error: No podman auth file found"
+              exit 1
+            fi
+          fi
+          
+          # Verify the config was copied
+          echo "Docker config location:"
+          ls -la ~/.docker/config.json
+        
       - name: Generate artifact attestation
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/playbook-nest') || (github.event_name == 'workflow_dispatch' && inputs.push_to_registry)
-        env:
-          DOCKER_CONFIG: /tmp/.docker
-        run: |
-          # Create docker config directory and copy podman credentials
-          mkdir -p /tmp/.docker
-          
-          # Extract podman credentials and create docker config
-          USERNAME="${{ github.actor }}"
-          TOKEN="${{ secrets.GITHUB_TOKEN }}"
-          REGISTRY_AUTH=$(printf "%s:%s" "$USERNAME" "$TOKEN" | base64 -w 0)
-          # Provide credentials under multiple keys some tooling expects
-          cat > /tmp/.docker/config.json << EOF
-          {
-            "auths": {
-              "ghcr.io": {
-                "auth": "$REGISTRY_AUTH",
-                "username": "$USERNAME",
-                "password": "$TOKEN"
-              },
-              "https://ghcr.io": {
-                "auth": "$REGISTRY_AUTH",
-                "username": "$USERNAME",
-                "password": "$TOKEN"
-              },
-              "https://ghcr.io/v1/": {
-                "auth": "$REGISTRY_AUTH",
-                "username": "$USERNAME",
-                "password": "$TOKEN"
-              }
-            },
-            "HttpHeaders": {
-              "User-Agent": "github-actions-attest"
-            }
-          }
-          EOF
-          
-          # Use the attestation action with custom docker config
-          echo "Using podman-compatible credentials for attestation"
-        
-      - name: Generate artifact attestation with podman credentials
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/playbook-nest') || (github.event_name == 'workflow_dispatch' && inputs.push_to_registry)
         uses: actions/attest-build-provenance@v1
-        env:
-          DOCKER_CONFIG: /tmp/.docker
         with:
-          # Use repo from docker/metadata-action and strip tag using supported functions
-          # subject-name must NOT include a tag when a digest is provided
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
