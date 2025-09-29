@@ -3,7 +3,7 @@ version: 3
 
 images:
   base_image:
-    name: registry.access.redhat.com/ubi10/python-312:latest
+    name: registry.access.redhat.com/ubi10/python-312-minimal:latest
 
 dependencies:
   # Install ansible-core first, before galaxy collections
