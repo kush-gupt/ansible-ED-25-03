@@ -3,39 +3,85 @@ version: 3
 
 images:
   base_image:
-    name: registry.access.redhat.com/ubi9/python-311:latest
+    name: registry.access.redhat.com/ubi9/ubi-micro:latest
 
 additional_build_files:
   - src: ansible.cfg
     dest: configs/
 
-dependencies:
-  # Install ansible-core first, before galaxy collections
-  ansible_core:
-    package_pip: ansible-core>=2.17.0
-  # Install ansible-runner (required for execution environments)
-  ansible_runner:
-    package_pip: ansible-runner>=2.3.0
-  # Python dependencies
-  python: requirements.txt
-  # System packages
-  system: bindep.txt
-  # Galaxy collections (installed after ansible-core)
-  galaxy: requirements.yml
+# NOTE: UBI Micro has no package manager - using multi-stage build pattern
+# All dependencies are installed in builder stage and copied to minimal runtime
 
 additional_build_steps:
   prepend_base:
-    # Install Python 3.11 and essential packages
-    - RUN dnf update -y && dnf install -y python3.11 python3.11-pip git openssh-clients && dnf clean all
-    # Set Python 3.11 as the default python3
-    - RUN alternatives --set python3 /usr/bin/python3.11 || update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
-  prepend_galaxy:
-    # Verify ansible-core and ansible-runner installation before galaxy operations
-    - RUN ansible --version
-    - RUN ansible-galaxy --version
-    - RUN ansible-runner --version
-  append_final:
+    # Stage 1: Builder with full toolchain
+    - ARG BUILDER_IMAGE=registry.access.redhat.com/ubi9/python-311:latest
+    - FROM ${BUILDER_IMAGE} AS builder
+    - RUN microdnf install -y git-core openssh-clients gcc python3.11-devel libffi-devel openssl-devel && microdnf clean all
+    
+    # Install Python packages with wheels
+    - COPY requirements.txt /tmp/
+    - RUN pip3.11 install --no-cache-dir --prefix=/opt/app-root \
+        ansible-core>=2.17.0,<2.18.0 \
+        ansible-runner>=2.3.0,<2.4.0 \
+        -r /tmp/requirements.txt
+    
+    # Install Ansible collections
+    - COPY requirements.yml /tmp/
+    - ENV ANSIBLE_COLLECTIONS_PATH=/opt/app-root/collections
+    - RUN ansible-galaxy collection install -r /tmp/requirements.yml
+    
+    # Stage 2: Minimal UBI Micro runtime (NO package manager, NO build tools)
+    - FROM registry.access.redhat.com/ubi9/ubi-micro:9.4
+    
+    # Copy Python runtime from builder
+    - COPY --from=builder /usr/bin/python3.11 /usr/bin/python3.11
+    - COPY --from=builder /usr/lib64/python3.11 /usr/lib64/python3.11
+    - COPY --from=builder /usr/lib64/libpython3.11.so* /usr/lib64/
+    
+    # Copy all installed packages from builder
+    - COPY --from=builder /opt/app-root /opt/app-root
+    
+    # Copy only essential runtime binaries
+    - COPY --from=builder /usr/bin/git /usr/bin/git
+    - COPY --from=builder /usr/bin/ssh /usr/bin/ssh
+    - COPY --from=builder /usr/bin/ssh-keygen /usr/bin/ssh-keygen
+    
+    # Copy required shared libraries for git and ssh
+    - COPY --from=builder /usr/lib64/libcurl.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libssh.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libnghttp2.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libidn2.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libssl.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libcrypto.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libz.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libgssapi_krb5.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libkrb5.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libk5crypto.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libcom_err.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libkrb5support.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libkeyutils.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libresolv.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libselinux.so* /usr/lib64/
+    - COPY --from=builder /usr/lib64/libpcre2-8.so* /usr/lib64/
+    
+    # Create symlinks
+    - RUN ln -sf /usr/bin/python3.11 /usr/bin/python3
+    - RUN ln -sf /usr/bin/python3.11 /usr/bin/python
+    
+    # Set PATH to include installed binaries
+    - ENV PATH=/opt/app-root/bin:/usr/local/bin:/usr/bin:/bin
+    - ENV PYTHONPATH=/opt/app-root/lib/python3.11/site-packages
+    - ENV ANSIBLE_COLLECTIONS_PATH=/opt/app-root/collections
+    
     # Copy ansible configuration
     - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
-    # Verify ansible configuration
-    - RUN cat /etc/ansible/ansible.cfg
+    
+    # Create non-root user for security
+    - RUN echo "ansible:x:1000:1000:Ansible User:/home/ansible:/bin/sh" >> /etc/passwd
+    - RUN echo "ansible:x:1000:" >> /etc/group
+    - RUN mkdir -p /home/ansible && chown -R 1000:1000 /home/ansible
+    
+    # Set working directory
+    - WORKDIR /runner
+    - USER 1000

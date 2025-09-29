@@ -1,10 +1,9 @@
-# System dependencies for the execution environment
-# These packages will be installed via the system package manager
-python3 [platform:rpm platform:dpkg]
-python3-pip [platform:rpm platform:dpkg]
-git [platform:rpm platform:dpkg]
-openssh-clients [platform:rpm]
-openssh-client [platform:dpkg]
-gcc [platform:rpm platform:dpkg]
-python3-devel [platform:rpm]
-python3-dev [platform:dpkg]
+# System dependencies - NOT USED with UBI Micro multi-stage build
+# 
+# UBI Micro has no package manager, so all dependencies are installed
+# in the builder stage and copied to the minimal runtime image.
+# 
+# See execution-environment.yml for the multi-stage build process.
+#
+# This file is kept for reference but is not processed by ansible-builder
+# when using the multi-stage approach in additional_build_steps.
