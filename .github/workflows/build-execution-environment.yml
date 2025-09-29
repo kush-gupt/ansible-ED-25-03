@@ -285,27 +285,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install ansible-builder
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible-builder>=3.0.0
-
       - name: Prepare build context
         run: |
-          # Copy the ansible requirements to root for EE build
+          # Copy the ansible requirements to root for Containerfile
           cp ansible/requirements.yml ./
 
-      - name: Build execution environment for scanning
+      - name: Build execution environment for scanning (UBI Micro)
         run: |
-          ansible-builder build \
-            --file execution-environment.yml \
-            --tag scan-ee:latest \
-            --verbosity 1
+          echo "Building UBI Micro image for security scanning..."
+          podman build \
+            -f Containerfile.ubi-micro \
+            -t scan-ee:latest \
+            --squash-all \
+            --force-rm \
+            .
 
       - name: Setup Trivy
         uses: aquasecurity/setup-trivy@v0.2.4
