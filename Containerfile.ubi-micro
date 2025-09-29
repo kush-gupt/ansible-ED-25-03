@@ -18,8 +18,8 @@ RUN dnf install -y \
 # Install Python packages to /opt/app-root
 COPY requirements.txt /tmp/requirements.txt
 RUN pip3.11 install --no-cache-dir --prefix=/opt/app-root \
-    ansible-core>=2.17.0,<2.18.0 \
-    ansible-runner>=2.3.0,<2.4.0 \
+    'ansible-core>=2.17.0,<2.18.0' \
+    'ansible-runner>=2.3.0,<2.4.0' \
     -r /tmp/requirements.txt
 
 # Install Ansible collections from Galaxy (cisco.asa and ansible.netcommon)
